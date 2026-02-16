@@ -5,22 +5,7 @@ if (!config) {
   throw new Error("Missing frontend config. Check frontend/config.js.");
 }
 
-const msalConfig = {
-  auth: {
-    clientId: config.auth.clientId,
-    authority: config.auth.authority,
-    knownAuthorities: config.auth.knownAuthorities,
-    redirectUri: config.auth.redirectUri
-  },
-  cache: {
-    cacheLocation: "localStorage",
-    storeAuthStateInCookie: false
-  }
-};
-
-const msalClient = new msal.PublicClientApplication(msalConfig);
 const popupRedirectUri = config.auth.popupRedirectUri || new URL("auth-callback.html", window.location.href).href;
-const redirectPromise = msalClient.handleRedirectPromise();
 
 const ui = {
   navbar: document.querySelector(".navbar"),
@@ -52,6 +37,13 @@ const ui = {
 };
 
 let content = null;
+let msalClient = null;
+let redirectPromise = null;
+
+function isPlaceholder(value) {
+  const str = String(value || "").trim();
+  return str.includes("<") || str.includes(">");
+}
 
 function text(path, fallback = "") {
   const keys = path.split(".");
@@ -171,6 +163,10 @@ function clearError() {
 
 async function login() {
   clearError();
+  if (!msalClient) {
+    throw new Error("Authentication is not configured. Update frontend/config.js with Prithu Connect app details.");
+  }
+
   const loginRequest = {
     scopes: [config.api.scope]
   };
@@ -188,6 +184,11 @@ async function login() {
 
 async function logout() {
   clearError();
+  if (!msalClient) {
+    setAuthState(null);
+    return;
+  }
+
   const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
   if (!account) {
     setAuthState(null);
@@ -203,6 +204,10 @@ async function logout() {
 }
 
 async function getAccessToken() {
+  if (!msalClient) {
+    throw new Error("Authentication is not configured. Update frontend/config.js with Prithu Connect app details.");
+  }
+
   const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
   if (!account) {
     throw new Error(text("messages.noSignedInAccount", "Please sign in first."));
@@ -277,6 +282,11 @@ function wireEvents() {
 }
 
 async function initializeAuthState() {
+  if (!msalClient || !redirectPromise) {
+    setAuthState(null);
+    return;
+  }
+
   const response = await redirectPromise;
   if (response?.account) {
     msalClient.setActiveAccount(response.account);
@@ -293,6 +303,41 @@ async function initializeAuthState() {
   }
 }
 
+function initializeMsal() {
+  if (!window.msal?.PublicClientApplication) {
+    showError("MSAL library failed to load.");
+    return;
+  }
+
+  if (
+    !config.auth?.clientId ||
+    !config.auth?.authority ||
+    isPlaceholder(config.auth.clientId) ||
+    isPlaceholder(config.auth.authority) ||
+    isPlaceholder(config.api?.scope)
+  ) {
+    showError("Configure frontend/config.js with real Prithu Connect clientId, authority, and API scope.");
+    setAuthState(null);
+    return;
+  }
+
+  const msalConfig = {
+    auth: {
+      clientId: config.auth.clientId,
+      authority: config.auth.authority,
+      knownAuthorities: config.auth.knownAuthorities,
+      redirectUri: config.auth.redirectUri
+    },
+    cache: {
+      cacheLocation: "localStorage",
+      storeAuthStateInCookie: false
+    }
+  };
+
+  msalClient = new msal.PublicClientApplication(msalConfig);
+  redirectPromise = msalClient.handleRedirectPromise();
+}
+
 async function bootstrap() {
   const response = await fetch(CONTENT_PATH, { cache: "no-cache" });
   if (!response.ok) {
@@ -302,6 +347,7 @@ async function bootstrap() {
   content = await response.json();
   applyContent();
   wireEvents();
+  initializeMsal();
   await initializeAuthState();
 }
 
