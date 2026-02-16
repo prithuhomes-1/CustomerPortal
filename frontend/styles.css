@@ -1,0 +1,117 @@
+:root {
+  --bg: #f3f6fb;
+  --card: #ffffff;
+  --text: #12263a;
+  --muted: #5f6c7b;
+  --accent: #0d6e6e;
+  --border: #d8e1ea;
+  --error: #b42318;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background: linear-gradient(160deg, #e8eef7 0%, var(--bg) 45%, #eef3f9 100%);
+}
+
+.container {
+  width: min(960px, 92vw);
+  margin: 2rem auto;
+  display: grid;
+  gap: 1rem;
+}
+
+h1 {
+  margin: 0;
+}
+
+p {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+
+.nav-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button[disabled] {
+  border-color: #9ca3af;
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9rem;
+}
+
+.error {
+  border-color: #fda29b;
+  color: var(--error);
+}
+
+.tables-root {
+  display: grid;
+  gap: 1rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.55rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.data-table th {
+  background: #edf2f8;
+}

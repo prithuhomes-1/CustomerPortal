@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title></title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+  <script defer src="./config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1 id="pageTitle"></h1>
+      <p id="pageSubtitle"></p>
+      <a id="dataViewLink" class="nav-link" href="./data-view.html"></a>
+    </header>
+
+    <section class="actions">
+      <button id="loginBtn" type="button"></button>
+      <button id="loadBtn" type="button" disabled></button>
+      <button id="logoutBtn" type="button" disabled></button>
+    </section>
+
+    <section class="panel">
+      <h2 id="sessionHeading"></h2>
+      <pre id="sessionView"></pre>
+    </section>
+
+    <section class="panel">
+      <h2 id="projectsHeading"></h2>
+      <pre id="projectsView"></pre>
+    </section>
+
+    <section class="panel error" id="errorPanel" hidden>
+      <h2 id="errorHeading"></h2>
+      <pre id="errorView"></pre>
+    </section>
+  </main>
+</body>
+</html>

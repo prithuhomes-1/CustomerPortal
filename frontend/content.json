@@ -1,0 +1,36 @@
+{
+  "index": {
+    "pageTitle": "Prithu Customer Portal",
+    "pageSubtitle": "Sign in to view your project records.",
+    "links": {
+      "dataView": "Open Content Data View"
+    },
+    "buttons": {
+      "login": "Sign In",
+      "loadProjects": "Load Projects",
+      "logout": "Sign Out"
+    },
+    "sections": {
+      "session": "Session",
+      "projects": "Projects",
+      "error": "Error"
+    },
+    "placeholders": {
+      "noActiveSession": "No active session.",
+      "noDataLoaded": "No data loaded.",
+      "loading": "Loading..."
+    }
+  },
+  "messages": {
+    "noSignedInAccount": "No signed-in account available."
+  },
+  "dataView": {
+    "pageTitle": "Content Data View",
+    "pageSubtitle": "Section-wise table representation of content.json.",
+    "backLink": "Back To Portal",
+    "table": {
+      "keyColumn": "Key",
+      "valueColumn": "Value"
+    }
+  }
+}
