@@ -1,112 +1,173 @@
-const loginBtn = document.getElementById("loginBtn");
-const loadBtn = document.getElementById("loadBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const sessionView = document.getElementById("sessionView");
-const projectsView = document.getElementById("projectsView");
-const errorPanel = document.getElementById("errorPanel");
-const errorView = document.getElementById("errorView");
-const pageTitle = document.getElementById("pageTitle");
-const pageSubtitle = document.getElementById("pageSubtitle");
-const dataViewLink = document.getElementById("dataViewLink");
-const sessionHeading = document.getElementById("sessionHeading");
-const projectsHeading = document.getElementById("projectsHeading");
-const errorHeading = document.getElementById("errorHeading");
 const CONTENT_PATH = "./content.json";
-
-let content = null;
-
-function getContentValue(path, fallback = "") {
-  if (!content) {
-    return fallback;
-  }
-
-  const keys = path.split(".");
-  let current = content;
-
-  for (const key of keys) {
-    if (current === null || typeof current !== "object" || !(key in current)) {
-      return fallback;
-    }
-    current = current[key];
-  }
-
-  return typeof current === "string" ? current : fallback;
-}
 
 const config = window.portalConfig;
 if (!config) {
   throw new Error("Missing frontend config. Check frontend/config.js.");
 }
 
-const msalClient = new msal.PublicClientApplication({
-  auth: config.auth,
-  cache: {
-    cacheLocation: "sessionStorage"
+const ui = {
+  navbar: document.querySelector(".navbar"),
+  hamburger: document.getElementById("hamburger"),
+  brandLink: document.getElementById("brand-link"),
+  brandLogo: document.getElementById("brand-logo"),
+  appLogo: document.getElementById("app-logo"),
+  navLinks: document.getElementById("nav-links"),
+  guestArea: document.getElementById("guest-area"),
+  userArea: document.getElementById("user-area"),
+  loginBtn: document.getElementById("login-btn"),
+  signupBtn: document.getElementById("signup-btn"),
+  logoutBtn: document.getElementById("logout-btn"),
+  userName: document.getElementById("user-name"),
+  heroVideo: document.getElementById("hero-video"),
+  heroTitle: document.getElementById("hero-title"),
+  heroSubtitle: document.getElementById("hero-subtitle"),
+  primaryCta: document.getElementById("primary-cta"),
+  secondaryCta: document.getElementById("secondary-cta"),
+  featuresTitle: document.getElementById("features-title"),
+  featuresSubtitle: document.getElementById("features-subtitle"),
+  featureGrid: document.getElementById("feature-grid"),
+  projectsTitle: document.getElementById("projects-title"),
+  projectsSubtitle: document.getElementById("projects-subtitle"),
+  projectsView: document.getElementById("projects-view"),
+  errorPanel: document.getElementById("error-panel"),
+  errorView: document.getElementById("error-view"),
+  footerText: document.getElementById("footer-text")
+};
+
+let content = null;
+let msalClient = null;
+
+function text(path, fallback = "") {
+  const keys = path.split(".");
+  let current = content;
+  for (const key of keys) {
+    if (current === null || typeof current !== "object" || !(key in current)) {
+      return fallback;
+    }
+    current = current[key];
   }
-});
-
-function applyStaticContent() {
-  document.title = getContentValue("index.pageTitle", "Customer Portal");
-  pageTitle.textContent = getContentValue("index.pageTitle", "Customer Portal");
-  pageSubtitle.textContent = getContentValue("index.pageSubtitle", "");
-  dataViewLink.textContent = getContentValue("index.links.dataView", "Data View");
-  loginBtn.textContent = getContentValue("index.buttons.login", "Sign In");
-  loadBtn.textContent = getContentValue("index.buttons.loadProjects", "Load Projects");
-  logoutBtn.textContent = getContentValue("index.buttons.logout", "Sign Out");
-  sessionHeading.textContent = getContentValue("index.sections.session", "Session");
-  projectsHeading.textContent = getContentValue("index.sections.projects", "Projects");
-  errorHeading.textContent = getContentValue("index.sections.error", "Error");
-  sessionView.textContent = getContentValue("index.placeholders.noActiveSession", "No active session.");
-  projectsView.textContent = getContentValue("index.placeholders.noDataLoaded", "No data loaded.");
+  return typeof current === "string" ? current : fallback;
 }
 
-function setSignedOut() {
-  loadBtn.disabled = true;
-  logoutBtn.disabled = true;
-  sessionView.textContent = getContentValue("index.placeholders.noActiveSession", "No active session.");
+function setAuthState(account) {
+  if (account) {
+    ui.guestArea.classList.add("hidden");
+    ui.userArea.classList.remove("hidden");
+    ui.userName.textContent = account.username || text("auth.defaultUserName", "User");
+  } else {
+    ui.guestArea.classList.remove("hidden");
+    ui.userArea.classList.add("hidden");
+    ui.userName.textContent = "";
+  }
 }
 
-function setSignedIn(account) {
-  loadBtn.disabled = false;
-  logoutBtn.disabled = false;
-  sessionView.textContent = JSON.stringify(
-    {
-      username: account.username,
-      tenantId: account.tenantId,
-      homeAccountId: account.homeAccountId
-    },
-    null,
-    2
-  );
+function renderNav() {
+  const links = content.navigation?.links ?? [];
+  ui.navLinks.innerHTML = "";
+  links.forEach((link) => {
+    const a = document.createElement("a");
+    a.href = link.href || "#";
+    a.textContent = link.label || "";
+    ui.navLinks.appendChild(a);
+  });
+}
+
+function renderFeatures() {
+  const cards = content.features?.cards ?? [];
+  ui.featureGrid.innerHTML = "";
+  cards.forEach((card) => {
+    const anchor = document.createElement("a");
+    anchor.className = "card-link";
+    anchor.href = card.href || "#";
+
+    const image = card.imageUrl
+      ? `<div class="card-image"><img src="${card.imageUrl}" alt="${card.title || ""}" /><span class="card-badge">${card.badge || ""}</span></div>`
+      : `<div class="card-image"><span class="card-badge">${card.badge || ""}</span></div>`;
+
+    anchor.innerHTML = `
+      <article class="card">
+        ${image}
+        <div class="card-body">
+          <h3>${card.title || ""}</h3>
+          <p>${card.description || ""}</p>
+        </div>
+      </article>
+    `;
+    ui.featureGrid.appendChild(anchor);
+  });
+}
+
+function applyContent() {
+  document.title = text("site.title", "Customer Portal");
+  ui.brandLink.href = text("brand.link", "#");
+  ui.brandLogo.src = text("brand.brandLogoUrl", "");
+  ui.brandLogo.alt = text("brand.brandLogoAlt", "");
+  ui.appLogo.src = text("brand.appLogoUrl", "");
+  ui.appLogo.alt = text("brand.appLogoAlt", "");
+
+  ui.loginBtn.textContent = text("auth.login", "Login");
+  ui.signupBtn.textContent = text("auth.signup", "Sign Up");
+  ui.logoutBtn.textContent = text("auth.logout", "Logout");
+
+  ui.heroTitle.textContent = text("hero.title", "");
+  ui.heroSubtitle.textContent = text("hero.subtitle", "");
+  ui.primaryCta.textContent = text("hero.primaryCta", "Get Started");
+  ui.secondaryCta.textContent = text("hero.secondaryCta", "Load Projects");
+
+  ui.featuresTitle.textContent = text("features.title", "");
+  ui.featuresSubtitle.textContent = text("features.subtitle", "");
+  ui.projectsTitle.textContent = text("projects.title", "Projects");
+  ui.projectsSubtitle.textContent = text("projects.subtitle", "");
+  ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
+  ui.footerText.textContent = text("footer.text", "");
+
+  const videoUrl = text("hero.videoUrl", "");
+  if (videoUrl) {
+    ui.heroVideo.src = videoUrl;
+    ui.heroVideo.load();
+    ui.heroVideo.play().catch(() => {});
+  }
+
+  renderNav();
+  renderFeatures();
 }
 
 function showError(err) {
-  errorPanel.hidden = false;
-  errorView.textContent = typeof err === "string" ? err : JSON.stringify(err, null, 2);
+  ui.errorPanel.classList.remove("hidden");
+  ui.errorView.textContent = typeof err === "string" ? err : JSON.stringify(err, null, 2);
 }
 
 function clearError() {
-  errorPanel.hidden = true;
-  errorView.textContent = "";
+  ui.errorPanel.classList.add("hidden");
+  ui.errorView.textContent = "";
 }
 
-async function initializeSession() {
-  const response = await msalClient.handleRedirectPromise();
-  const account = response?.account ?? msalClient.getAllAccounts()[0];
-  if (!account) {
-    setSignedOut();
-    return null;
+async function initializeAuth() {
+  if (!window.msal?.PublicClientApplication) {
+    throw new Error(text("messages.msalMissing", "MSAL script not loaded."));
   }
 
-  msalClient.setActiveAccount(account);
-  setSignedIn(account);
-  return account;
+  msalClient = new msal.PublicClientApplication({
+    auth: config.auth,
+    cache: { cacheLocation: "sessionStorage" }
+  });
+
+  const response = await msalClient.handleRedirectPromise();
+  const account = response?.account ?? msalClient.getAllAccounts()[0];
+  if (account) {
+    msalClient.setActiveAccount(account);
+  }
+  setAuthState(account || null);
 }
 
 async function login() {
   clearError();
   await msalClient.loginPopup({ scopes: [config.api.scope] });
-  await initializeSession();
+  const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
+  if (account) {
+    msalClient.setActiveAccount(account);
+  }
+  setAuthState(account || null);
 }
 
 async function logout() {
@@ -115,65 +176,78 @@ async function logout() {
   if (account) {
     await msalClient.logoutPopup({ account });
   }
-  setSignedOut();
-  projectsView.textContent = getContentValue("index.placeholders.noDataLoaded", "No data loaded.");
+  setAuthState(null);
+  ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
 }
 
 async function getAccessToken() {
   const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
   if (!account) {
-    throw new Error(getContentValue("messages.noSignedInAccount", "No signed-in account available."));
+    throw new Error(text("messages.noSignedInAccount", "No signed-in account available."));
   }
 
-  const tokenRequest = {
-    account,
-    scopes: [config.api.scope]
-  };
-
+  const request = { account, scopes: [config.api.scope] };
   try {
-    const tokenResponse = await msalClient.acquireTokenSilent(tokenRequest);
-    return tokenResponse.accessToken;
+    const result = await msalClient.acquireTokenSilent(request);
+    return result.accessToken;
   } catch {
-    const tokenResponse = await msalClient.acquireTokenPopup(tokenRequest);
-    return tokenResponse.accessToken;
+    const result = await msalClient.acquireTokenPopup(request);
+    return result.accessToken;
   }
 }
 
 async function loadProjects() {
   clearError();
-  projectsView.textContent = getContentValue("index.placeholders.loading", "Loading...");
-
+  ui.projectsView.textContent = text("projects.placeholders.loading", "Loading...");
   try {
     const token = await getAccessToken();
     const response = await fetch(config.api.endpoint, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` }
     });
-
-    const text = await response.text();
-    let payload;
-
-    try {
-      payload = text ? JSON.parse(text) : null;
-    } catch {
-      payload = text;
-    }
+    const body = await response.text();
+    const payload = body ? JSON.parse(body) : [];
 
     if (!response.ok) {
       throw { status: response.status, payload };
     }
 
-    projectsView.textContent = JSON.stringify(payload ?? [], null, 2);
+    ui.projectsView.textContent = JSON.stringify(payload, null, 2);
+    document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
-    projectsView.textContent = getContentValue("index.placeholders.noDataLoaded", "No data loaded.");
+    ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
     showError(err);
   }
 }
 
-loginBtn.addEventListener("click", login);
-loadBtn.addEventListener("click", loadProjects);
-logoutBtn.addEventListener("click", logout);
+function wireEvents() {
+  ui.hamburger.addEventListener("click", () => {
+    ui.navbar.classList.toggle("mobile-open");
+  });
+
+  ui.loginBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await login();
+  });
+
+  ui.signupBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await login();
+  });
+
+  ui.logoutBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await logout();
+  });
+
+  ui.primaryCta.addEventListener("click", () => {
+    document.getElementById("trainings").scrollIntoView({ behavior: "smooth" });
+  });
+
+  ui.secondaryCta.addEventListener("click", async () => {
+    await loadProjects();
+  });
+}
 
 async function bootstrap() {
   const response = await fetch(CONTENT_PATH, { cache: "no-cache" });
@@ -182,8 +256,9 @@ async function bootstrap() {
   }
 
   content = await response.json();
-  applyStaticContent();
-  await initializeSession();
+  applyContent();
+  wireEvents();
+  await initializeAuth();
 }
 
 bootstrap().catch(showError);

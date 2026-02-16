@@ -1,28 +1,76 @@
 {
-  "index": {
-    "pageTitle": "Prithu Customer Portal",
-    "pageSubtitle": "Sign in to view your project records.",
-    "links": {
-      "dataView": "Open Content Data View"
-    },
-    "buttons": {
-      "login": "Sign In",
-      "loadProjects": "Load Projects",
-      "logout": "Sign Out"
-    },
-    "sections": {
-      "session": "Session",
-      "projects": "Projects",
-      "error": "Error"
-    },
+  "site": {
+    "title": "Prithu Homes Customer Portal"
+  },
+  "brand": {
+    "link": "https://prithu-homes.com",
+    "brandLogoUrl": "https://dummyimage.com/120x40/ffffff/111111&text=Prithu",
+    "brandLogoAlt": "Prithu Brand",
+    "appLogoUrl": "https://dummyimage.com/120x40/ffffff/0056b3&text=Portal",
+    "appLogoAlt": "Portal Logo"
+  },
+  "navigation": {
+    "links": [
+      { "label": "Home", "href": "#top" },
+      { "label": "Trainings", "href": "#trainings" },
+      { "label": "Projects", "href": "#projects" },
+      { "label": "Content Data", "href": "./data-view.html" }
+    ]
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "defaultUserName": "Customer"
+  },
+  "hero": {
+    "title": "Build Better Homes",
+    "subtitle": "Securely access your projects, milestones, and transactions in one place.",
+    "primaryCta": "Explore Trainings",
+    "secondaryCta": "Load Projects",
+    "videoUrl": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+  },
+  "features": {
+    "title": "Featured Trainings",
+    "subtitle": "Practical resources to help you navigate each project phase confidently.",
+    "cards": [
+      {
+        "title": "Project Journey 101",
+        "description": "Understand milestones from booking to possession with real examples.",
+        "badge": "Beginner",
+        "href": "#",
+        "imageUrl": "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        "title": "Agreement Essentials",
+        "description": "Review your agreement sections and obligations quickly and clearly.",
+        "badge": "Popular",
+        "href": "#",
+        "imageUrl": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        "title": "Payment Tracking",
+        "description": "Learn how to track payment milestones and completed transactions.",
+        "badge": "Advanced",
+        "href": "#",
+        "imageUrl": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80"
+      }
+    ]
+  },
+  "projects": {
+    "title": "My Projects",
+    "subtitle": "Your API response appears below after authentication.",
     "placeholders": {
-      "noActiveSession": "No active session.",
-      "noDataLoaded": "No data loaded.",
-      "loading": "Loading..."
+      "default": "No project data loaded.",
+      "loading": "Loading projects..."
     }
   },
   "messages": {
-    "noSignedInAccount": "No signed-in account available."
+    "noSignedInAccount": "Please sign in first.",
+    "msalMissing": "MSAL library is unavailable."
+  },
+  "footer": {
+    "text": "Copyright 2026 Prithu Homes. All rights reserved."
   },
   "dataView": {
     "pageTitle": "Content Data View",

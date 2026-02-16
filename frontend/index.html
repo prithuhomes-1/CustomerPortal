@@ -1,42 +1,87 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title></title>
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <script defer src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
   <script defer src="./config.js"></script>
   <script defer src="./app.js"></script>
 </head>
-<body>
-  <main class="container">
-    <header>
-      <h1 id="pageTitle"></h1>
-      <p id="pageSubtitle"></p>
-      <a id="dataViewLink" class="nav-link" href="./data-view.html"></a>
-    </header>
+<body id="top">
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand-wrap">
+        <a href="#" id="brand-link" class="logo">
+          <img id="brand-logo" src="" alt="" />
+        </a>
+        <a href="./index.html" aria-label="Go to home page">
+          <img id="app-logo" src="" alt="" class="app-logo" />
+        </a>
+      </div>
+      <div id="nav-links" class="nav-links"></div>
+      <div class="nav-auth">
+        <div id="guest-area" class="inline-row">
+          <a href="#" id="login-btn" class="btn-text"></a>
+          <a href="#" id="signup-btn" class="btn btn-primary"></a>
+        </div>
+        <div id="user-area" class="hidden inline-row">
+          <span id="user-name" class="user-name"></span>
+          <a href="#" id="logout-btn" class="btn-text"></a>
+        </div>
+      </div>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
 
-    <section class="actions">
-      <button id="loginBtn" type="button"></button>
-      <button id="loadBtn" type="button" disabled></button>
-      <button id="logoutBtn" type="button" disabled></button>
-    </section>
+  <header class="hero">
+    <div class="video-container">
+      <video id="hero-video" class="video-bg" muted loop playsinline></video>
+      <div class="overlay"></div>
+    </div>
+    <div class="hero-content">
+      <h1 id="hero-title"></h1>
+      <p id="hero-subtitle"></p>
+      <div class="cta-buttons">
+        <button id="primary-cta" class="btn btn-primary" type="button"></button>
+        <button id="secondary-cta" class="btn btn-outline" type="button"></button>
+      </div>
+    </div>
+  </header>
 
-    <section class="panel">
-      <h2 id="sessionHeading"></h2>
-      <pre id="sessionView"></pre>
-    </section>
+  <section id="trainings" class="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="features-title"></h2>
+        <p id="features-subtitle"></p>
+      </div>
+      <div id="feature-grid" class="feature-grid"></div>
+    </div>
+  </section>
 
-    <section class="panel">
-      <h2 id="projectsHeading"></h2>
-      <pre id="projectsView"></pre>
-    </section>
+  <section id="projects" class="projects-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="projects-title"></h2>
+        <p id="projects-subtitle"></p>
+      </div>
+      <div class="project-panel">
+        <pre id="projects-view"></pre>
+      </div>
+      <div class="project-panel error hidden" id="error-panel">
+        <pre id="error-view"></pre>
+      </div>
+    </div>
+  </section>
 
-    <section class="panel error" id="errorPanel" hidden>
-      <h2 id="errorHeading"></h2>
-      <pre id="errorView"></pre>
-    </section>
-  </main>
+  <footer>
+    <div class="container">
+      <p id="footer-text"></p>
+    </div>
+  </footer>
 </body>
 </html>
