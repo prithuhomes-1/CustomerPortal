@@ -5,6 +5,23 @@ if (!config) {
   throw new Error("Missing frontend config. Check frontend/config.js.");
 }
 
+const msalConfig = {
+  auth: {
+    clientId: config.auth.clientId,
+    authority: config.auth.authority,
+    knownAuthorities: config.auth.knownAuthorities,
+    redirectUri: config.auth.redirectUri
+  },
+  cache: {
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: false
+  }
+};
+
+const msalClient = new msal.PublicClientApplication(msalConfig);
+const popupRedirectUri = config.auth.popupRedirectUri || new URL("auth-callback.html", window.location.href).href;
+const redirectPromise = msalClient.handleRedirectPromise();
+
 const ui = {
   navbar: document.querySelector(".navbar"),
   hamburger: document.getElementById("hamburger"),
@@ -35,7 +52,6 @@ const ui = {
 };
 
 let content = null;
-let msalClient = null;
 
 function text(path, fallback = "") {
   const keys = path.split(".");
@@ -49,11 +65,22 @@ function text(path, fallback = "") {
   return typeof current === "string" ? current : fallback;
 }
 
+function normalizeNavHref(href) {
+  const value = String(href || "").trim();
+  if (!value.startsWith("#")) {
+    return value || "#";
+  }
+
+  const page = (window.location.pathname.split("/").pop() || "").toLowerCase();
+  const isHomePage = page === "" || page === "index.html";
+  return isHomePage ? value : `index.html${value}`;
+}
+
 function setAuthState(account) {
   if (account) {
     ui.guestArea.classList.add("hidden");
     ui.userArea.classList.remove("hidden");
-    ui.userName.textContent = account.username || text("auth.defaultUserName", "User");
+    ui.userName.textContent = `Hi, ${account.name || account.username || text("auth.defaultUserName", "Customer")}`;
   } else {
     ui.guestArea.classList.remove("hidden");
     ui.userArea.classList.add("hidden");
@@ -66,7 +93,7 @@ function renderNav() {
   ui.navLinks.innerHTML = "";
   links.forEach((link) => {
     const a = document.createElement("a");
-    a.href = link.href || "#";
+    a.href = normalizeNavHref(link.href || "#");
     a.textContent = link.label || "";
     ui.navLinks.appendChild(a);
   });
@@ -111,7 +138,7 @@ function applyContent() {
 
   ui.heroTitle.textContent = text("hero.title", "");
   ui.heroSubtitle.textContent = text("hero.subtitle", "");
-  ui.primaryCta.textContent = text("hero.primaryCta", "Get Started");
+  ui.primaryCta.textContent = text("hero.primaryCta", "Explore");
   ui.secondaryCta.textContent = text("hero.secondaryCta", "Load Projects");
 
   ui.featuresTitle.textContent = text("features.title", "");
@@ -142,40 +169,35 @@ function clearError() {
   ui.errorView.textContent = "";
 }
 
-async function initializeAuth() {
-  if (!window.msal?.PublicClientApplication) {
-    throw new Error(text("messages.msalMissing", "MSAL script not loaded."));
-  }
-
-  msalClient = new msal.PublicClientApplication({
-    auth: config.auth,
-    cache: { cacheLocation: "sessionStorage" }
-  });
-
-  const response = await msalClient.handleRedirectPromise();
-  const account = response?.account ?? msalClient.getAllAccounts()[0];
-  if (account) {
-    msalClient.setActiveAccount(account);
-  }
-  setAuthState(account || null);
-}
-
 async function login() {
   clearError();
-  await msalClient.loginPopup({ scopes: [config.api.scope] });
-  const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
-  if (account) {
-    msalClient.setActiveAccount(account);
+  const loginRequest = {
+    scopes: [config.api.scope]
+  };
+
+  if (config.auth.authority) {
+    loginRequest.authority = config.auth.authority;
   }
-  setAuthState(account || null);
+
+  loginRequest.redirectUri = popupRedirectUri;
+
+  const response = await msalClient.loginPopup(loginRequest);
+  msalClient.setActiveAccount(response.account);
+  setAuthState(response.account);
 }
 
 async function logout() {
   clearError();
   const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
-  if (account) {
-    await msalClient.logoutPopup({ account });
+  if (!account) {
+    setAuthState(null);
+    return;
   }
+
+  await msalClient.logoutPopup({
+    account,
+    mainWindowRedirectUri: config.auth.redirectUri
+  });
   setAuthState(null);
   ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
 }
@@ -183,15 +205,20 @@ async function logout() {
 async function getAccessToken() {
   const account = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
   if (!account) {
-    throw new Error(text("messages.noSignedInAccount", "No signed-in account available."));
+    throw new Error(text("messages.noSignedInAccount", "Please sign in first."));
   }
 
-  const request = { account, scopes: [config.api.scope] };
+  const request = {
+    account,
+    scopes: [config.api.scope],
+    authority: config.auth.authority
+  };
+
   try {
     const result = await msalClient.acquireTokenSilent(request);
     return result.accessToken;
   } catch {
-    const result = await msalClient.acquireTokenPopup(request);
+    const result = await msalClient.acquireTokenPopup({ ...request, redirectUri: popupRedirectUri });
     return result.accessToken;
   }
 }
@@ -249,6 +276,23 @@ function wireEvents() {
   });
 }
 
+async function initializeAuthState() {
+  const response = await redirectPromise;
+  if (response?.account) {
+    msalClient.setActiveAccount(response.account);
+    setAuthState(response.account);
+    return;
+  }
+
+  const current = msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0];
+  if (current) {
+    msalClient.setActiveAccount(current);
+    setAuthState(current);
+  } else {
+    setAuthState(null);
+  }
+}
+
 async function bootstrap() {
   const response = await fetch(CONTENT_PATH, { cache: "no-cache" });
   if (!response.ok) {
@@ -258,7 +302,7 @@ async function bootstrap() {
   content = await response.json();
   applyContent();
   wireEvents();
-  await initializeAuth();
+  await initializeAuthState();
 }
 
 bootstrap().catch(showError);
