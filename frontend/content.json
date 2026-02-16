@@ -76,6 +76,7 @@
     "pageTitle": "Content Data View",
     "pageSubtitle": "Section-wise table representation of content.json.",
     "backLink": "Back To Portal",
+    "downloadButton": "Download JSON",
     "table": {
       "keyColumn": "Key",
       "valueColumn": "Value"
