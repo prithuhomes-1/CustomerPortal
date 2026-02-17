@@ -303,6 +303,7 @@ public class GetCustomerProjects
         using var request = new HttpRequestMessage(HttpMethod.Get, queryUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dataverseToken);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.TryAddWithoutValidation("Prefer", "odata.include-annotations=\"OData.Community.Display.V1.FormattedValue\"");
         request.Headers.Add("OData-Version", "4.0");
         request.Headers.Add("OData-MaxVersion", "4.0");
 
@@ -514,6 +515,7 @@ public class GetCustomerProjects
         using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dataverseToken);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.TryAddWithoutValidation("Prefer", "odata.include-annotations=\"OData.Community.Display.V1.FormattedValue\"");
         request.Headers.Add("OData-Version", "4.0");
         request.Headers.Add("OData-MaxVersion", "4.0");
 
