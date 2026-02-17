@@ -179,12 +179,16 @@ public class GetCustomerProjects
     private async Task<string?> GetContactAsync(string oid, string email, string dataverseToken)
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var contactsTable = GetEnvironmentVariableOrDefault("Dataverse_ContactsTable", "contacts");
+        var contactIdField = GetEnvironmentVariableOrDefault("Dataverse_ContactIdField", "contactid");
+        var b2cObjectIdField = GetEnvironmentVariableOrDefault("Dataverse_ContactB2cObjectIdField", "prithu_b2cobjectid");
+        var emailField = GetEnvironmentVariableOrDefault("Dataverse_ContactEmailField", "emailaddress1");
         var escapedOid = EscapeODataString(oid);
         var escapedEmail = EscapeODataString(email);
 
-        var byOidUrl = $"{dataverseUrl}/api/data/v9.2/contacts?$filter=prithu_b2cobjectid eq '{escapedOid}'&$select=contactid";
+        var byOidUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={b2cObjectIdField} eq '{escapedOid}'&$select={contactIdField}";
         var byOidResponseBody = await SendDataverseGetAsync(byOidUrl, dataverseToken);
-        var contactId = ExtractFirstContactId(byOidResponseBody);
+        var contactId = ExtractFirstId(byOidResponseBody, contactIdField);
 
         if (!string.IsNullOrEmpty(contactId))
         {
@@ -192,17 +196,20 @@ public class GetCustomerProjects
             return contactId;
         }
 
-        var byEmailUrl = $"{dataverseUrl}/api/data/v9.2/contacts?$filter=emailaddress1 eq '{escapedEmail}'&$select=contactid";
+        var byEmailUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={emailField} eq '{escapedEmail}'&$select={contactIdField}";
         var byEmailResponseBody = await SendDataverseGetAsync(byEmailUrl, dataverseToken);
-        contactId = ExtractFirstContactId(byEmailResponseBody);
+        contactId = ExtractFirstId(byEmailResponseBody, contactIdField);
 
         if (string.IsNullOrEmpty(contactId))
         {
             return null;
         }
 
-        var patchUrl = $"{dataverseUrl}/api/data/v9.2/contacts({contactId})";
-        var patchData = new { prithu_b2cobjectid = oid };
+        var patchUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}({contactId})";
+        var patchData = new Dictionary<string, string>
+        {
+            [b2cObjectIdField] = oid
+        };
         using var patchRequest = new HttpRequestMessage(new HttpMethod("PATCH"), patchUrl)
         {
             Content = new StringContent(JsonSerializer.Serialize(patchData), Encoding.UTF8, "application/json")
@@ -227,8 +234,10 @@ public class GetCustomerProjects
     private async Task<string> GetProjectsAsync(string contactId, string dataverseToken)
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "projects");
+        var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_customerid_value");
         var escapedContactId = EscapeODataString(contactId);
-        var queryUrl = $"{dataverseUrl}/api/data/v9.2/projects?$filter=_customerid_value eq '{escapedContactId}'";
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectContactLookupField} eq '{escapedContactId}'";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, queryUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dataverseToken);
@@ -241,19 +250,19 @@ public class GetCustomerProjects
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Failed to retrieve projects. ContactId: {ContactId}, Status: {StatusCode}, Error: {Error}", contactId, (int)response.StatusCode, content);
+            _logger.LogError("Failed to retrieve projects. Table: {ProjectsTable}, LookupField: {LookupField}, ContactId: {ContactId}, Status: {StatusCode}, Error: {Error}", projectsTable, projectContactLookupField, contactId, (int)response.StatusCode, content);
             throw new InvalidOperationException("Failed to retrieve projects from Dataverse.");
         }
 
         using var jsonDoc = JsonDocument.Parse(content);
         if (!jsonDoc.RootElement.TryGetProperty("value", out var projectArray) || projectArray.ValueKind != JsonValueKind.Array)
         {
-            _logger.LogWarning("Projects payload missing 'value' array. ContactId: {ContactId}", contactId);
+            _logger.LogWarning("Projects payload missing 'value' array. Table: {ProjectsTable}, ContactId: {ContactId}", projectsTable, contactId);
             return "[]";
         }
 
         var projectCount = projectArray.GetArrayLength();
-        _logger.LogInformation("Retrieved {ProjectCount} projects. ContactId: {ContactId}", projectCount, contactId);
+        _logger.LogInformation("Retrieved {ProjectCount} projects. Table: {ProjectsTable}, LookupField: {LookupField}, ContactId: {ContactId}", projectCount, projectsTable, projectContactLookupField, contactId);
         return projectArray.GetRawText();
     }
 
@@ -294,7 +303,7 @@ public class GetCustomerProjects
         return value.Replace("'", "''", StringComparison.Ordinal);
     }
 
-    private static string? ExtractFirstContactId(string content)
+    private static string? ExtractFirstId(string content, string idFieldName)
     {
         using var jsonDoc = JsonDocument.Parse(content);
         if (!jsonDoc.RootElement.TryGetProperty("value", out var value) || value.ValueKind != JsonValueKind.Array || value.GetArrayLength() == 0)
@@ -302,7 +311,7 @@ public class GetCustomerProjects
             return null;
         }
 
-        return value[0].TryGetProperty("contactid", out var contactIdProperty) ? contactIdProperty.GetString() : null;
+        return value[0].TryGetProperty(idFieldName, out var idProperty) ? idProperty.GetString() : null;
     }
 
     private async Task<string> SendDataverseGetAsync(string requestUrl, string dataverseToken)
@@ -341,6 +350,12 @@ public class GetCustomerProjects
 
         await response.WriteStringAsync(payload, Encoding.UTF8);
         return response;
+    }
+
+    private static string GetEnvironmentVariableOrDefault(string key, string defaultValue)
+    {
+        var value = Environment.GetEnvironmentVariable(key);
+        return string.IsNullOrWhiteSpace(value) ? defaultValue : value.Trim();
     }
 }
 
