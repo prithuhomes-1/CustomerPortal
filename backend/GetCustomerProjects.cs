@@ -53,15 +53,28 @@ public class GetCustomerProjects
                 return await CreateJsonErrorResponseAsync(req, HttpStatusCode.Unauthorized, "Token validation failed.");
             }
 
-            var oid = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "oid")?.Value;
+            var oid = GetFirstClaimValue(
+                claimsPrincipal,
+                "oid",
+                "http://schemas.microsoft.com/identity/claims/objectidentifier",
+                "sub",
+                ClaimTypes.NameIdentifier,
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
             var email = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "email")?.Value
                 ?? claimsPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value
-                ?? claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "emails")?.Value;
+                ?? claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "emails")?.Value
+                ?? claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value
+                ?? claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "upn")?.Value;
 
-            if (string.IsNullOrEmpty(oid) || string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(oid))
             {
-                _logger.LogWarning("Token missing required claims. OID present: {HasOid}, Email present: {HasEmail}", !string.IsNullOrEmpty(oid), !string.IsNullOrEmpty(email));
+                _logger.LogWarning("Token missing required identity claim. Expected one of: oid/objectidentifier/sub/nameidentifier.");
                 return await CreateJsonErrorResponseAsync(req, HttpStatusCode.Unauthorized, "Required token claims are missing.");
+            }
+
+            if (string.IsNullOrEmpty(email))
+            {
+                _logger.LogInformation("Token does not contain email-like claims. Will use OID-only contact lookup. OID: {OID}", oid);
             }
 
             var dataverseToken = await AcquireDataverseTokenAsync();
@@ -143,7 +156,13 @@ public class GetCustomerProjects
                 _logger.LogInformation("External_Policy not configured. Skipping tfp/acr policy claim validation.");
             }
 
-            var oid = principal.Claims.FirstOrDefault(c => c.Type == "oid")?.Value;
+            var oid = GetFirstClaimValue(
+                principal,
+                "oid",
+                "http://schemas.microsoft.com/identity/claims/objectidentifier",
+                "sub",
+                ClaimTypes.NameIdentifier,
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
             _logger.LogInformation("Token validated successfully. OID: {OID}", oid);
             return principal;
         }
@@ -181,7 +200,7 @@ public class GetCustomerProjects
         }
     }
 
-    private async Task<string?> GetContactAsync(string oid, string email, string dataverseToken)
+    private async Task<string?> GetContactAsync(string oid, string? email, string dataverseToken)
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
         var contactsTable = GetEnvironmentVariableOrDefault("Dataverse_ContactsTable", "contacts");
@@ -189,7 +208,6 @@ public class GetCustomerProjects
         var b2cObjectIdField = GetEnvironmentVariableOrDefault("Dataverse_ContactB2cObjectIdField", "prithu_b2cobjectid");
         var emailField = GetEnvironmentVariableOrDefault("Dataverse_ContactEmailField", "emailaddress1");
         var escapedOid = EscapeODataString(oid);
-        var escapedEmail = EscapeODataString(email);
 
         var byOidUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={b2cObjectIdField} eq '{escapedOid}'&$select={contactIdField}";
         var byOidResponseBody = await SendDataverseGetAsync(byOidUrl, dataverseToken);
@@ -200,6 +218,14 @@ public class GetCustomerProjects
             _logger.LogInformation("Contact found by OID. OID: {OID}, ContactId: {ContactId}", oid, contactId);
             return contactId;
         }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            _logger.LogWarning("Contact not found by OID and email fallback is unavailable. OID: {OID}", oid);
+            return null;
+        }
+
+        var escapedEmail = EscapeODataString(email);
 
         var byEmailUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={emailField} eq '{escapedEmail}'&$select={contactIdField}";
         var byEmailResponseBody = await SendDataverseGetAsync(byEmailUrl, dataverseToken);
@@ -306,6 +332,20 @@ public class GetCustomerProjects
     private static string EscapeODataString(string value)
     {
         return value.Replace("'", "''", StringComparison.Ordinal);
+    }
+
+    private static string? GetFirstClaimValue(ClaimsPrincipal principal, params string[] claimTypes)
+    {
+        foreach (var claimType in claimTypes)
+        {
+            var value = principal.Claims.FirstOrDefault(c => c.Type == claimType)?.Value;
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     private static string? ExtractFirstId(string content, string idFieldName)
