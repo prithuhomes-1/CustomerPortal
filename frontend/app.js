@@ -153,7 +153,18 @@ function applyContent() {
 
 function showError(err) {
   ui.errorPanel.classList.remove("hidden");
-  ui.errorView.textContent = typeof err === "string" ? err : JSON.stringify(err, null, 2);
+  if (typeof err === "string") {
+    ui.errorView.textContent = err;
+    return;
+  }
+
+  const message = err?.message || err?.errorMessage || "";
+  const code = err?.errorCode || err?.code || "";
+  const details = err?.subError || err?.name || "";
+  const payload = err?.payload ? `\nPayload: ${JSON.stringify(err.payload, null, 2)}` : "";
+
+  ui.errorView.textContent =
+    `${code ? `[${code}] ` : ""}${message || "Unexpected error occurred."}${details ? ` (${details})` : ""}${payload}`;
 }
 
 function clearError() {
@@ -277,7 +288,6 @@ function wireEvents() {
       await login();
     } catch (err) {
       showError(err);
-      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
     }
   });
 
@@ -287,7 +297,6 @@ function wireEvents() {
       await login();
     } catch (err) {
       showError(err);
-      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
     }
   });
 
@@ -297,7 +306,6 @@ function wireEvents() {
       await logout();
     } catch (err) {
       showError(err);
-      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
     }
   });
 
