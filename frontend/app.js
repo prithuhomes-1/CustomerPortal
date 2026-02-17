@@ -176,10 +176,24 @@ async function login() {
   }
 
   loginRequest.redirectUri = popupRedirectUri;
-
-  const response = await msalClient.loginPopup(loginRequest);
-  msalClient.setActiveAccount(response.account);
-  setAuthState(response.account);
+  try {
+    const response = await msalClient.loginPopup(loginRequest);
+    msalClient.setActiveAccount(response.account);
+    setAuthState(response.account);
+  } catch (err) {
+    const message = String(err?.message || err || "");
+    if (
+      message.toLowerCase().includes("popup") ||
+      message.toLowerCase().includes("blocked")
+    ) {
+      await msalClient.loginRedirect({
+        ...loginRequest,
+        redirectUri: config.auth.redirectUri
+      });
+      return;
+    }
+    throw err;
+  }
 }
 
 async function logout() {
@@ -259,17 +273,32 @@ function wireEvents() {
 
   ui.loginBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    await login();
+    try {
+      await login();
+    } catch (err) {
+      showError(err);
+      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
+    }
   });
 
   ui.signupBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    await login();
+    try {
+      await login();
+    } catch (err) {
+      showError(err);
+      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
+    }
   });
 
   ui.logoutBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    await logout();
+    try {
+      await logout();
+    } catch (err) {
+      showError(err);
+      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
+    }
   });
 
   ui.primaryCta.addEventListener("click", () => {
@@ -277,7 +306,12 @@ function wireEvents() {
   });
 
   ui.secondaryCta.addEventListener("click", async () => {
-    await loadProjects();
+    try {
+      await loadProjects();
+    } catch (err) {
+      showError(err);
+      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
+    }
   });
 }
 
