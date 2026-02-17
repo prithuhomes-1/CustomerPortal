@@ -30,6 +30,8 @@ const ui = {
   featureGrid: document.getElementById("feature-grid"),
   projectsTitle: document.getElementById("projects-title"),
   projectsSubtitle: document.getElementById("projects-subtitle"),
+  loadProjectsBtn: document.getElementById("load-projects-btn"),
+  loadAgreementsBtn: document.getElementById("load-agreements-btn"),
   projectsView: document.getElementById("projects-view"),
   errorPanel: document.getElementById("error-panel"),
   errorView: document.getElementById("error-view"),
@@ -137,6 +139,8 @@ function applyContent() {
   ui.featuresSubtitle.textContent = text("features.subtitle", "");
   ui.projectsTitle.textContent = text("projects.title", "Projects");
   ui.projectsSubtitle.textContent = text("projects.subtitle", "");
+  ui.loadProjectsBtn.textContent = text("projects.actions.loadProjects", "Load Projects");
+  ui.loadAgreementsBtn.textContent = text("projects.actions.loadAgreements", "Load Agreements");
   ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
   ui.footerText.textContent = text("footer.text", "");
 
@@ -253,12 +257,25 @@ async function getAccessToken() {
   }
 }
 
-async function loadProjects() {
+function buildEntityEndpoint(entity) {
+  if (config.api?.dataEndpoint) {
+    return `${config.api.dataEndpoint}?entity=${encodeURIComponent(entity)}`;
+  }
+
+  if (config.api?.endpoint && config.api.endpoint.includes("/api/customer/projects")) {
+    return config.api.endpoint.replace("/api/customer/projects", `/api/customer/data?entity=${encodeURIComponent(entity)}`);
+  }
+
+  return config.api.endpoint;
+}
+
+async function loadEntity(entity, loadingMessage) {
   clearError();
-  ui.projectsView.textContent = text("projects.placeholders.loading", "Loading...");
+  ui.projectsView.textContent = loadingMessage || text("projects.placeholders.loading", "Loading...");
   try {
     const token = await getAccessToken();
-    const response = await fetch(config.api.endpoint, {
+    const endpoint = entity === "projects" ? config.api.endpoint : buildEntityEndpoint(entity);
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -275,6 +292,15 @@ async function loadProjects() {
     ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
     showError(err);
   }
+}
+
+async function loadProjects() {
+  await loadEntity("projects", text("projects.placeholders.loading", "Loading projects..."));
+}
+
+async function loadAgreements() {
+  const entityKey = text("projects.actions.agreementsEntityKey", "customeragreements");
+  await loadEntity(entityKey, text("projects.placeholders.loadingAgreements", "Loading customer agreements..."));
 }
 
 function wireEvents() {
@@ -319,6 +345,22 @@ function wireEvents() {
     } catch (err) {
       showError(err);
       document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
+    }
+  });
+
+  ui.loadProjectsBtn.addEventListener("click", async () => {
+    try {
+      await loadProjects();
+    } catch (err) {
+      showError(err);
+    }
+  });
+
+  ui.loadAgreementsBtn.addEventListener("click", async () => {
+    try {
+      await loadAgreements();
+    } catch (err) {
+      showError(err);
     }
   });
 }

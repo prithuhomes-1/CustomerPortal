@@ -60,9 +60,15 @@
   "projects": {
     "title": "My Projects",
     "subtitle": "Your API response appears below after authentication.",
+    "actions": {
+      "loadProjects": "Load Projects",
+      "loadAgreements": "Load Agreements",
+      "agreementsEntityKey": "customeragreements"
+    },
     "placeholders": {
       "default": "No project data loaded.",
-      "loading": "Loading projects..."
+      "loading": "Loading projects...",
+      "loadingAgreements": "Loading customer agreements..."
     }
   },
   "messages": {
