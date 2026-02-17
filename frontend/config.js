@@ -1,17 +1,22 @@
+const isLocalHost =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+
 window.portalConfig = {
   auth: {
-    // Prithu Connect (Entra External ID) SPA app registration client ID.
-    clientId: "<prithu-connect-spa-client-id>",
-    // B2C authority must include the user flow/policy.
-    authority: "https://prithuconnect.b2clogin.com/prithuconnect.onmicrosoft.com/B2C_1_SignUpSignIn",
+    clientId: "3e5a0abe-cdfc-49de-9f3b-43d85f70b760",
+    authority:
+      "https://prithuconnect.b2clogin.com/prithuconnect.onmicrosoft.com/B2C_1_SignUpSignIn",
     knownAuthorities: ["prithuconnect.b2clogin.com"],
-    // Keep this exact URL registered in Entra External ID app registration.
-    redirectUri: window.location.origin + window.location.pathname,
-    popupRedirectUri: window.location.origin + window.location.pathname.replace(/[^/]*$/, "auth-callback.html")
+    redirectUri:
+      "https://prithuhomes-1.github.io/CustomerPortal/frontend/index.html",
+    popupRedirectUri:
+      "https://prithuhomes-1.github.io/CustomerPortal/frontend/auth-callback.html",
   },
   api: {
-    // Exposed API scope from the external API app registration.
-    scope: "api://<external-api-client-id>/access_as_user",
-    endpoint: "http://localhost:7071/api/customer/projects"
-  }
+    scope: "api://8cce258e-5182-48a8-851d-87825f0343fe/access_as_user",
+    endpoint: isLocalHost
+      ? "http://localhost:7071/api/customer/projects"
+      : "https://<your-function-app-name>.azurewebsites.net/api/customer/projects",
+  },
 };
