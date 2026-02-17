@@ -17,6 +17,6 @@ window.portalConfig = {
     scope: "api://8cce258e-5182-48a8-851d-87825f0343fe/access_as_user",
     endpoint: isLocalHost
       ? "http://localhost:7071/api/customer/projects"
-      : "https://<your-function-app-name>.azurewebsites.net/api/customer/projects",
+      : "https://prithu-customer-api-ctfehbhkgpbaanf9.centralindia-01.azurewebsites.net/api/customer/projects",
   },
 };
