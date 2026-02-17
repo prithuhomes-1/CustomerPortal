@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -31,6 +32,17 @@ public class GetCustomerProjects
 
     [Function("GetCustomerProjects")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "customer/projects")] Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
+    {
+        return await HandleRequestAsync(req);
+    }
+
+    [Function("GetCustomerData")]
+    public async Task<HttpResponseData> RunCustomerData([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "customer/data")] Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
+    {
+        return await HandleRequestAsync(req);
+    }
+
+    private async Task<HttpResponseData> HandleRequestAsync(Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
     {
         try
         {
@@ -90,11 +102,28 @@ public class GetCustomerProjects
                 return await CreateJsonErrorResponseAsync(req, HttpStatusCode.Forbidden, "User is authenticated but not authorized for customer data.");
             }
 
-            var projectsJson = await GetProjectsAsync(contactId, dataverseToken);
+            var secondaryEntityKey = GetEnvironmentVariableOrDefault("Dataverse_SecondaryEntityKey", "related");
+            var requestedEntity = GetQueryParameter(req.Url, "entity");
+            var entity = string.IsNullOrWhiteSpace(requestedEntity) ? "projects" : requestedEntity.Trim().ToLowerInvariant();
+
+            string responseJson;
+            if (entity == "projects")
+            {
+                responseJson = await GetProjectsAsync(contactId, dataverseToken);
+            }
+            else if (entity == secondaryEntityKey.ToLowerInvariant())
+            {
+                responseJson = await GetSecondaryEntityAsync(contactId, dataverseToken);
+            }
+            else
+            {
+                _logger.LogWarning("Unsupported entity requested. Entity: {Entity}, OID: {OID}, ContactId: {ContactId}", entity, oid, contactId);
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}.");
+            }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "application/json; charset=utf-8");
-            await response.WriteStringAsync(projectsJson, Encoding.UTF8);
+            await response.WriteStringAsync(responseJson, Encoding.UTF8);
             return response;
         }
         catch (SecurityTokenException ex)
@@ -267,8 +296,9 @@ public class GetCustomerProjects
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
         var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "projects");
         var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_customerid_value");
+        var projectsSelectFields = Environment.GetEnvironmentVariable("Dataverse_ProjectsSelectFields")?.Trim();
         var escapedContactId = EscapeODataString(contactId);
-        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectContactLookupField} eq '{escapedContactId}'";
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectContactLookupField} eq '{escapedContactId}'{BuildSelectClause(projectsSelectFields)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, queryUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dataverseToken);
@@ -295,6 +325,85 @@ public class GetCustomerProjects
         var projectCount = projectArray.GetArrayLength();
         _logger.LogInformation("Retrieved {ProjectCount} projects. Table: {ProjectsTable}, LookupField: {LookupField}, ContactId: {ContactId}", projectCount, projectsTable, projectContactLookupField, contactId);
         return projectArray.GetRawText();
+    }
+
+    private async Task<string> GetSecondaryEntityAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var secondaryTable = GetRequiredEnvironmentVariable("Dataverse_SecondaryTable");
+        var secondaryMode = GetEnvironmentVariableOrDefault("Dataverse_SecondaryMode", "CustomerLookup");
+        var secondarySelectFields = Environment.GetEnvironmentVariable("Dataverse_SecondarySelectFields")?.Trim();
+
+        if (string.Equals(secondaryMode, "ProjectLookup", StringComparison.OrdinalIgnoreCase))
+        {
+            var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
+            if (projectIds.Count == 0)
+            {
+                _logger.LogInformation("No projects found for secondary project-based lookup. ContactId: {ContactId}", contactId);
+                return "[]";
+            }
+
+            var secondaryProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_SecondaryProjectLookupField");
+            var projectFilter = string.Join(" or ", projectIds.Select(id => $"{secondaryProjectLookupField} eq '{EscapeODataString(id)}'"));
+            var secondaryUrl = $"{dataverseUrl}/api/data/v9.2/{secondaryTable}?$filter={projectFilter}{BuildSelectClause(secondarySelectFields)}";
+            var responseBody = await SendDataverseGetAsync(secondaryUrl, dataverseToken);
+
+            using var jsonDoc = JsonDocument.Parse(responseBody);
+            if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+            {
+                return "[]";
+            }
+
+            _logger.LogInformation("Retrieved secondary records by project lookup. Table: {Table}, ContactId: {ContactId}, ProjectCount: {ProjectCount}, RecordCount: {RecordCount}", secondaryTable, contactId, projectIds.Count, values.GetArrayLength());
+            return values.GetRawText();
+        }
+
+        var secondaryCustomerLookupField = GetRequiredEnvironmentVariable("Dataverse_SecondaryCustomerLookupField");
+        var escapedContactId = EscapeODataString(contactId);
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{secondaryTable}?$filter={secondaryCustomerLookupField} eq '{escapedContactId}'{BuildSelectClause(secondarySelectFields)}";
+        var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
+
+        using var customerLookupDoc = JsonDocument.Parse(content);
+        if (!customerLookupDoc.RootElement.TryGetProperty("value", out var customerLookupValues) || customerLookupValues.ValueKind != JsonValueKind.Array)
+        {
+            return "[]";
+        }
+
+        _logger.LogInformation("Retrieved secondary records by customer lookup. Table: {Table}, ContactId: {ContactId}, RecordCount: {RecordCount}", secondaryTable, contactId, customerLookupValues.GetArrayLength());
+        return customerLookupValues.GetRawText();
+    }
+
+    private async Task<List<string>> GetProjectIdsForContactAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "projects");
+        var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_customerid_value");
+        var projectIdField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsIdField", "sgr_projectid");
+        var escapedContactId = EscapeODataString(contactId);
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectContactLookupField} eq '{escapedContactId}'&$select={projectIdField}";
+
+        var responseBody = await SendDataverseGetAsync(queryUrl, dataverseToken);
+        using var jsonDoc = JsonDocument.Parse(responseBody);
+
+        if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return new List<string>();
+        }
+
+        var ids = new List<string>();
+        foreach (var item in values.EnumerateArray())
+        {
+            if (item.TryGetProperty(projectIdField, out var idProp))
+            {
+                var idValue = idProp.GetString();
+                if (!string.IsNullOrWhiteSpace(idValue))
+                {
+                    ids.Add(idValue);
+                }
+            }
+        }
+
+        return ids;
     }
 
     private static void EnsureOpenIdConfigurationManager(string metadataUrl)
@@ -332,6 +441,47 @@ public class GetCustomerProjects
     private static string EscapeODataString(string value)
     {
         return value.Replace("'", "''", StringComparison.Ordinal);
+    }
+
+    private static string BuildSelectClause(string? selectFields)
+    {
+        return string.IsNullOrWhiteSpace(selectFields) ? string.Empty : $"&$select={selectFields}";
+    }
+
+    private static string? GetQueryParameter(Uri requestUri, string key)
+    {
+        var query = requestUri.Query;
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return null;
+        }
+
+        var trimmed = query.TrimStart('?');
+        var parts = trimmed.Split('&', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var part in parts)
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length == 0)
+            {
+                continue;
+            }
+
+            var name = Uri.UnescapeDataString(kv[0]);
+            if (!string.Equals(name, key, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (kv.Length == 1)
+            {
+                return string.Empty;
+            }
+
+            return Uri.UnescapeDataString(kv[1]);
+        }
+
+        return null;
     }
 
     private static string? GetFirstClaimValue(ClaimsPrincipal principal, params string[] claimTypes)
