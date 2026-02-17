@@ -107,7 +107,7 @@ public class GetCustomerProjects
         {
             var externalIssuer = GetRequiredEnvironmentVariable("External_Issuer");
             var externalClientId = GetRequiredEnvironmentVariable("External_ClientId");
-            var externalPolicy = GetRequiredEnvironmentVariable("External_Policy");
+            var externalPolicy = Environment.GetEnvironmentVariable("External_Policy");
             var metadataUrl = GetRequiredEnvironmentVariable("External_MetadataUrl");
 
             EnsureOpenIdConfigurationManager(metadataUrl);
@@ -132,10 +132,15 @@ public class GetCustomerProjects
             var policyClaim = principal.Claims.FirstOrDefault(c => c.Type == "tfp")?.Value
                 ?? principal.Claims.FirstOrDefault(c => c.Type == "acr")?.Value;
 
-            if (!string.Equals(policyClaim, externalPolicy, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(externalPolicy) &&
+                !string.Equals(policyClaim, externalPolicy, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("Token policy validation failed. Expected: {ExpectedPolicy}, Actual: {ActualPolicy}", externalPolicy, policyClaim);
                 throw new SecurityTokenValidationException("Token policy is invalid.");
+            }
+            else if (string.IsNullOrWhiteSpace(externalPolicy))
+            {
+                _logger.LogInformation("External_Policy not configured. Skipping tfp/acr policy claim validation.");
             }
 
             var oid = principal.Claims.FirstOrDefault(c => c.Type == "oid")?.Value;
