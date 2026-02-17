@@ -6,8 +6,8 @@ window.portalConfig = {
   auth: {
     clientId: "3e5a0abe-cdfc-49de-9f3b-43d85f70b760",
     authority:
-      "https://prithuconnect.b2clogin.com/prithuconnect.onmicrosoft.com/B2C_1_SignUpSignIn",
-    knownAuthorities: ["prithuconnect.b2clogin.com"],
+      "https://prithuconnect.ciamlogin.com/e80df615-7ecc-4b6e-8580-8b23c608ed9c",
+    knownAuthorities: ["prithuconnect.ciamlogin.com"],
     redirectUri:
       "https://prithuhomes-1.github.io/CustomerPortal/frontend/index.html",
     popupRedirectUri:
