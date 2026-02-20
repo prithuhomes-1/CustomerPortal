@@ -32,6 +32,7 @@ const ui = {
   projectsSubtitle: document.getElementById("projects-subtitle"),
   loadProjectsBtn: document.getElementById("load-projects-btn"),
   loadAgreementsBtn: document.getElementById("load-agreements-btn"),
+  loadMilestonesBtn: document.getElementById("load-milestones-btn"),
   projectsView: document.getElementById("projects-view"),
   errorPanel: document.getElementById("error-panel"),
   errorView: document.getElementById("error-view"),
@@ -141,6 +142,7 @@ function applyContent() {
   ui.projectsSubtitle.textContent = text("projects.subtitle", "");
   ui.loadProjectsBtn.textContent = text("projects.actions.loadProjects", "Load Projects");
   ui.loadAgreementsBtn.textContent = text("projects.actions.loadAgreements", "Load Agreements");
+  ui.loadMilestonesBtn.textContent = text("projects.actions.loadMilestones", "Load Milestones");
   ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
   ui.footerText.textContent = text("footer.text", "");
 
@@ -303,6 +305,11 @@ async function loadAgreements() {
   await loadEntity(entityKey, text("projects.placeholders.loadingAgreements", "Loading customer agreements..."));
 }
 
+async function loadMilestones() {
+  const entityKey = text("projects.actions.milestonesEntityKey", "paymentmilestones");
+  await loadEntity(entityKey, text("projects.placeholders.loadingMilestones", "Loading payment milestones..."));
+}
+
 function wireEvents() {
   ui.hamburger.addEventListener("click", () => {
     ui.navbar.classList.toggle("mobile-open");
@@ -359,6 +366,14 @@ function wireEvents() {
   ui.loadAgreementsBtn.addEventListener("click", async () => {
     try {
       await loadAgreements();
+    } catch (err) {
+      showError(err);
+    }
+  });
+
+  ui.loadMilestonesBtn.addEventListener("click", async () => {
+    try {
+      await loadMilestones();
     } catch (err) {
       showError(err);
     }

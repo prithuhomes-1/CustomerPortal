@@ -63,12 +63,15 @@
     "actions": {
       "loadProjects": "Load Projects",
       "loadAgreements": "Load Agreements",
-      "agreementsEntityKey": "customeragreements"
+      "loadMilestones": "Load Milestones",
+      "agreementsEntityKey": "customeragreements",
+      "milestonesEntityKey": "paymentmilestones"
     },
     "placeholders": {
       "default": "No project data loaded.",
       "loading": "Loading projects...",
-      "loadingAgreements": "Loading customer agreements..."
+      "loadingAgreements": "Loading customer agreements...",
+      "loadingMilestones": "Loading payment milestones..."
     }
   },
   "messages": {

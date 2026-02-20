@@ -103,6 +103,8 @@ public class GetCustomerProjects
             }
 
             var secondaryEntityKey = GetEnvironmentVariableOrDefault("Dataverse_SecondaryEntityKey", "related");
+            var thirdEntityKey = GetEnvironmentVariableOrDefault("Dataverse_3rdEntityKey", "customeragreements");
+            var fourthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_4thEntityKey", "paymentmilestones");
             var requestedEntity = GetQueryParameter(req.Url, "entity");
             var entity = string.IsNullOrWhiteSpace(requestedEntity) ? "projects" : requestedEntity.Trim().ToLowerInvariant();
 
@@ -115,10 +117,18 @@ public class GetCustomerProjects
             {
                 responseJson = await GetSecondaryEntityAsync(contactId, dataverseToken);
             }
+            else if (entity == thirdEntityKey.ToLowerInvariant())
+            {
+                responseJson = await GetThirdTableAsync(contactId, dataverseToken);
+            }
+            else if (entity == fourthEntityKey.ToLowerInvariant())
+            {
+                responseJson = await GetFourthTableAsync(contactId, dataverseToken);
+            }
             else
             {
                 _logger.LogWarning("Unsupported entity requested. Entity: {Entity}, OID: {OID}, ContactId: {ContactId}", entity, oid, contactId);
-                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}.");
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}.");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -395,6 +405,101 @@ public class GetCustomerProjects
         foreach (var item in values.EnumerateArray())
         {
             if (item.TryGetProperty(projectIdField, out var idProp))
+            {
+                var idValue = idProp.GetString();
+                if (!string.IsNullOrWhiteSpace(idValue))
+                {
+                    ids.Add(idValue);
+                }
+            }
+        }
+
+        return ids;
+    }
+
+    private async Task<string> GetThirdTableAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var thirdTable = GetRequiredEnvironmentVariable("Dataverse_3rdTable");
+        var thirdProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_3rdProjectLookupField");
+        var thirdSelectFields = Environment.GetEnvironmentVariable("Dataverse_3rdSelectFields")?.Trim();
+
+        var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
+        if (projectIds.Count == 0)
+        {
+            _logger.LogInformation("No projects found for 3rd table lookup. ContactId: {ContactId}", contactId);
+            return "[]";
+        }
+
+        var projectFilter = string.Join(" or ", projectIds.Select(id => $"{thirdProjectLookupField} eq '{EscapeODataString(id)}'"));
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{thirdTable}?$filter={projectFilter}{BuildSelectClause(thirdSelectFields)}";
+        var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
+
+        using var jsonDoc = JsonDocument.Parse(content);
+        if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return "[]";
+        }
+
+        _logger.LogInformation("Retrieved 3rd table records. Table: {Table}, ContactId: {ContactId}, ProjectCount: {ProjectCount}, RecordCount: {RecordCount}", thirdTable, contactId, projectIds.Count, values.GetArrayLength());
+        return values.GetRawText();
+    }
+
+    private async Task<string> GetFourthTableAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var fourthTable = GetRequiredEnvironmentVariable("Dataverse_4thTable");
+        var fourthThirdLookupField = GetRequiredEnvironmentVariable("Dataverse_4thThirdLookupField");
+        var fourthSelectFields = Environment.GetEnvironmentVariable("Dataverse_4thSelectFields")?.Trim();
+
+        var thirdIds = await GetThirdIdsForContactAsync(contactId, dataverseToken);
+        if (thirdIds.Count == 0)
+        {
+            _logger.LogInformation("No 3rd table records found for 4th table lookup. ContactId: {ContactId}", contactId);
+            return "[]";
+        }
+
+        var thirdFilter = string.Join(" or ", thirdIds.Select(id => $"{fourthThirdLookupField} eq '{EscapeODataString(id)}'"));
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{fourthTable}?$filter={thirdFilter}{BuildSelectClause(fourthSelectFields)}";
+        var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
+
+        using var jsonDoc = JsonDocument.Parse(content);
+        if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return "[]";
+        }
+
+        _logger.LogInformation("Retrieved 4th table records. Table: {Table}, ContactId: {ContactId}, ThirdRecordCount: {ThirdRecordCount}, RecordCount: {RecordCount}", fourthTable, contactId, thirdIds.Count, values.GetArrayLength());
+        return values.GetRawText();
+    }
+
+    private async Task<List<string>> GetThirdIdsForContactAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var thirdTable = GetRequiredEnvironmentVariable("Dataverse_3rdTable");
+        var thirdProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_3rdProjectLookupField");
+        var thirdIdField = GetEnvironmentVariableOrDefault("Dataverse_3rdIdField", "sgr_customeragreementid");
+
+        var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
+        if (projectIds.Count == 0)
+        {
+            return new List<string>();
+        }
+
+        var projectFilter = string.Join(" or ", projectIds.Select(id => $"{thirdProjectLookupField} eq '{EscapeODataString(id)}'"));
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{thirdTable}?$filter={projectFilter}&$select={thirdIdField}";
+        var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
+
+        using var jsonDoc = JsonDocument.Parse(content);
+        if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return new List<string>();
+        }
+
+        var ids = new List<string>();
+        foreach (var item in values.EnumerateArray())
+        {
+            if (item.TryGetProperty(thirdIdField, out var idProp))
             {
                 var idValue = idProp.GetString();
                 if (!string.IsNullOrWhiteSpace(idValue))
