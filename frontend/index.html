@@ -69,10 +69,19 @@
         <h2 id="projects-title"></h2>
         <p id="projects-subtitle"></p>
       </div>
-      <div class="cta-buttons">
-        <button id="load-projects-btn" class="btn btn-pill" type="button"></button>
-        <button id="load-agreements-btn" class="btn btn-pill" type="button"></button>
-        <button id="load-milestones-btn" class="btn btn-pill" type="button"></button>
+      <div class="data-tabs" role="tablist" aria-label="Project data tabs">
+        <button id="load-projects-btn" class="data-tab active" type="button" role="tab" aria-selected="true">
+          <span id="load-projects-label"></span>
+          <span class="tab-close" aria-hidden="true">x</span>
+        </button>
+        <button id="load-agreements-btn" class="data-tab" type="button" role="tab" aria-selected="false">
+          <span id="load-agreements-label"></span>
+          <span class="tab-close" aria-hidden="true">x</span>
+        </button>
+        <button id="load-milestones-btn" class="data-tab" type="button" role="tab" aria-selected="false">
+          <span id="load-milestones-label"></span>
+          <span class="tab-close" aria-hidden="true">x</span>
+        </button>
       </div>
       <div class="project-panel">
         <pre id="projects-view"></pre>

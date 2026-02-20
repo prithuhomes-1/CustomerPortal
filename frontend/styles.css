@@ -319,16 +319,50 @@ body {
   padding: 5rem 2rem;
 }
 
-.projects-section .cta-buttons {
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
+.data-tabs {
+  display: flex;
+  gap: 0.35rem;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding: 0.45rem 0.45rem 0;
+  border: 1px solid #d5d9e0;
+  border-radius: 10px 10px 0 0;
+  background: #f0f1f3;
+}
+
+.data-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid #ced3db;
+  border-bottom: none;
+  border-radius: 9px 9px 0 0;
+  background: #e8eaee;
+  color: #1d1d1d;
+  padding: 0.55rem 0.95rem;
+  font-weight: 600;
+  min-width: 170px;
+  justify-content: space-between;
+}
+
+.data-tab.active {
+  background: #fff;
+  border-color: #c7ccd5;
+}
+
+.tab-close {
+  color: #555;
+  font-weight: 500;
+  font-size: 0.95rem;
+  opacity: 0.9;
 }
 
 .project-panel {
   border: 1px solid #e4e9ef;
   background: #fff;
   border-radius: 12px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
   padding: 1rem;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
 }
@@ -436,6 +470,23 @@ footer {
   .cta-buttons {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .data-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-radius: 10px;
+    padding: 0.4rem;
+  }
+
+  .data-tab {
+    min-width: 0;
+    border-radius: 8px;
+    border: 1px solid #ced3db;
+  }
+
+  .data-tab.active {
+    border: 1px solid #c7ccd5;
   }
 
   .btn-pill {

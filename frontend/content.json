@@ -27,7 +27,7 @@
     "title": "Build Better Homes",
     "subtitle": "Securely access your projects, milestones, and transactions in one place.",
     "primaryCta": "Explore Trainings",
-    "secondaryCta": "Load Projects",
+    "secondaryCta": "Project Details",
     "videoUrl": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
   },
   "features": {
@@ -70,6 +70,8 @@
     "placeholders": {
       "default": "No project data loaded.",
       "loading": "Loading projects...",
+      "loadingAll": "Loading project details, agreements, and payment milestones...",
+      "loadProjectsFirst": "Click Project Details to load all sections.",
       "loadingAgreements": "Loading customer agreements...",
       "loadingMilestones": "Loading payment milestones..."
     }

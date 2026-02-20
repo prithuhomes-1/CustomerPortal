@@ -33,6 +33,9 @@ const ui = {
   loadProjectsBtn: document.getElementById("load-projects-btn"),
   loadAgreementsBtn: document.getElementById("load-agreements-btn"),
   loadMilestonesBtn: document.getElementById("load-milestones-btn"),
+  loadProjectsLabel: document.getElementById("load-projects-label"),
+  loadAgreementsLabel: document.getElementById("load-agreements-label"),
+  loadMilestonesLabel: document.getElementById("load-milestones-label"),
   projectsView: document.getElementById("projects-view"),
   errorPanel: document.getElementById("error-panel"),
   errorView: document.getElementById("error-view"),
@@ -42,6 +45,14 @@ const ui = {
 let content = null;
 let msalClient = null;
 let redirectPromise = null;
+let activeDataTab = "projects";
+const dataCache = {
+  projects: null,
+  agreements: null,
+  milestones: null,
+  loaded: false,
+  loading: false
+};
 
 function isPlaceholder(value) {
   const str = String(value || "").trim();
@@ -140,9 +151,9 @@ function applyContent() {
   ui.featuresSubtitle.textContent = text("features.subtitle", "");
   ui.projectsTitle.textContent = text("projects.title", "Projects");
   ui.projectsSubtitle.textContent = text("projects.subtitle", "");
-  ui.loadProjectsBtn.textContent = text("projects.actions.loadProjects", "Load Projects");
-  ui.loadAgreementsBtn.textContent = text("projects.actions.loadAgreements", "Load Agreements");
-  ui.loadMilestonesBtn.textContent = text("projects.actions.loadMilestones", "Load Milestones");
+  ui.loadProjectsLabel.textContent = text("projects.actions.loadProjects", "Load Projects");
+  ui.loadAgreementsLabel.textContent = text("projects.actions.loadAgreements", "Load Agreements");
+  ui.loadMilestonesLabel.textContent = text("projects.actions.loadMilestones", "Load Milestones");
   ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
   ui.footerText.textContent = text("footer.text", "");
 
@@ -176,6 +187,21 @@ function showError(err) {
 function clearError() {
   ui.errorPanel.classList.add("hidden");
   ui.errorView.textContent = "";
+}
+
+function setActiveTab(entity) {
+  activeDataTab = entity;
+  const mappings = [
+    { key: "projects", button: ui.loadProjectsBtn },
+    { key: "agreements", button: ui.loadAgreementsBtn },
+    { key: "milestones", button: ui.loadMilestonesBtn }
+  ];
+
+  mappings.forEach(({ key, button }) => {
+    const isActive = key === entity;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
 }
 
 async function login() {
@@ -231,6 +257,12 @@ async function logout() {
     mainWindowRedirectUri: config.auth.redirectUri
   });
   setAuthState(null);
+  dataCache.projects = null;
+  dataCache.agreements = null;
+  dataCache.milestones = null;
+  dataCache.loaded = false;
+  dataCache.loading = false;
+  setActiveTab("projects");
   ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
 }
 
@@ -271,43 +303,90 @@ function buildEntityEndpoint(entity) {
   return config.api.endpoint;
 }
 
-async function loadEntity(entity, loadingMessage) {
+async function fetchEntityPayload(entity, token) {
+  const endpoint = entity === "projects" ? config.api.endpoint : buildEntityEndpoint(entity);
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const body = await response.text();
+  const payload = body ? JSON.parse(body) : [];
+
+  if (!response.ok) {
+    throw { status: response.status, payload };
+  }
+
+  return payload;
+}
+
+function renderActiveData() {
+  const value =
+    activeDataTab === "projects"
+      ? dataCache.projects
+      : activeDataTab === "agreements"
+        ? dataCache.agreements
+        : dataCache.milestones;
+
+  if (value === null) {
+    ui.projectsView.textContent = text("projects.placeholders.loadProjectsFirst", "Click Project Details to load all sections.");
+    return;
+  }
+
+  ui.projectsView.textContent = JSON.stringify(value, null, 2);
+}
+
+async function loadAllProjectData() {
+  if (dataCache.loading) {
+    return;
+  }
+
   clearError();
-  ui.projectsView.textContent = loadingMessage || text("projects.placeholders.loading", "Loading...");
+  dataCache.loading = true;
+  ui.projectsView.textContent = text("projects.placeholders.loadingAll", "Loading project details, agreements, and milestones...");
+
   try {
     const token = await getAccessToken();
-    const endpoint = entity === "projects" ? config.api.endpoint : buildEntityEndpoint(entity);
-    const response = await fetch(endpoint, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const body = await response.text();
-    const payload = body ? JSON.parse(body) : [];
+    const agreementsEntityKey = text("projects.actions.agreementsEntityKey", "customeragreements");
+    const milestonesEntityKey = text("projects.actions.milestonesEntityKey", "paymentmilestones");
 
-    if (!response.ok) {
-      throw { status: response.status, payload };
-    }
+    const [projects, agreements, milestones] = await Promise.all([
+      fetchEntityPayload("projects", token),
+      fetchEntityPayload(agreementsEntityKey, token),
+      fetchEntityPayload(milestonesEntityKey, token)
+    ]);
 
-    ui.projectsView.textContent = JSON.stringify(payload, null, 2);
+    dataCache.projects = projects;
+    dataCache.agreements = agreements;
+    dataCache.milestones = milestones;
+    dataCache.loaded = true;
+    renderActiveData();
     document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
     ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
     showError(err);
+  } finally {
+    dataCache.loading = false;
   }
 }
 
 async function loadProjects() {
-  await loadEntity("projects", text("projects.placeholders.loading", "Loading projects..."));
+  setActiveTab("projects");
+  if (!dataCache.loaded) {
+    await loadAllProjectData();
+    return;
+  }
+
+  renderActiveData();
 }
 
 async function loadAgreements() {
-  const entityKey = text("projects.actions.agreementsEntityKey", "customeragreements");
-  await loadEntity(entityKey, text("projects.placeholders.loadingAgreements", "Loading customer agreements..."));
+  setActiveTab("agreements");
+  renderActiveData();
 }
 
 async function loadMilestones() {
-  const entityKey = text("projects.actions.milestonesEntityKey", "paymentmilestones");
-  await loadEntity(entityKey, text("projects.placeholders.loadingMilestones", "Loading payment milestones..."));
+  setActiveTab("milestones");
+  renderActiveData();
 }
 
 function wireEvents() {
@@ -445,6 +524,7 @@ async function bootstrap() {
 
   content = await response.json();
   applyContent();
+  setActiveTab("projects");
   wireEvents();
   initializeMsal();
   await initializeAuthState();
