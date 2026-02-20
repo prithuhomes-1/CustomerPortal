@@ -476,9 +476,23 @@ public class GetCustomerProjects
     private async Task<List<string>> GetThirdIdsForContactAsync(string contactId, string dataverseToken)
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
-        var thirdTable = GetRequiredEnvironmentVariable("Dataverse_3rdTable");
-        var thirdProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_3rdProjectLookupField");
-        var thirdIdField = GetEnvironmentVariableOrDefault("Dataverse_3rdIdField", "sgr_customeragreementid");
+        var thirdTable = Environment.GetEnvironmentVariable("Dataverse_3rdTable");
+        if (string.IsNullOrWhiteSpace(thirdTable))
+        {
+            thirdTable = GetRequiredEnvironmentVariable("Dataverse_SecondaryTable");
+        }
+
+        var thirdProjectLookupField = Environment.GetEnvironmentVariable("Dataverse_3rdProjectLookupField");
+        if (string.IsNullOrWhiteSpace(thirdProjectLookupField))
+        {
+            thirdProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_SecondaryProjectLookupField");
+        }
+
+        var thirdIdField = Environment.GetEnvironmentVariable("Dataverse_3rdIdField");
+        if (string.IsNullOrWhiteSpace(thirdIdField))
+        {
+            thirdIdField = GetEnvironmentVariableOrDefault("Dataverse_SecondaryIdField", "sgr_customeragreementid");
+        }
 
         var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
         if (projectIds.Count == 0)
