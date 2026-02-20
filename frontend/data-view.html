@@ -16,6 +16,38 @@
       margin-bottom: 3rem;
     }
 
+    .data-section details {
+      border: 1px solid #d8dfea;
+      border-radius: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .section-summary {
+      list-style: none;
+      cursor: pointer;
+      font-size: 1.4rem;
+      font-weight: 700;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid #e6ebf3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .summary-link {
+      color: #1d4ed8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .summary-link:hover {
+      text-decoration: underline;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -41,10 +73,45 @@
       background-color: #f8f9fa;
     }
 
-    h2 {
-      border-bottom: 2px solid var(--primary);
-      padding-bottom: 0.5rem;
-      display: inline-block;
+    .toolbar {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .shortcut-wrap {
+      margin-bottom: 1.5rem;
+      border: 1px solid #d8dfea;
+      border-radius: 10px;
+      background: #f8fafd;
+      padding: 0.9rem 1rem;
+    }
+
+    .shortcut-title {
+      margin-bottom: 0.6rem;
+      font-weight: 700;
+      color: #1b1f2a;
+    }
+
+    .shortcut-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    .shortcut-list a {
+      text-decoration: none;
+      color: #0f4db8;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .shortcut-list a:hover {
+      text-decoration: underline;
     }
 
     .value-editor {
@@ -79,6 +146,14 @@
     <div style="margin-bottom: 2rem; display: flex; gap: 1rem">
       <button id="download-json-btn" class="btn btn-primary"></button>
     </div>
+    <div class="toolbar">
+      <button id="expand-all-btn" class="btn btn-outline"></button>
+      <button id="collapse-all-btn" class="btn btn-outline"></button>
+    </div>
+    <section class="shortcut-wrap">
+      <div id="shortcut-title" class="shortcut-title"></div>
+      <ul id="shortcut-list" class="shortcut-list"></ul>
+    </section>
 
     <section id="tablesRoot"></section>
   </main>

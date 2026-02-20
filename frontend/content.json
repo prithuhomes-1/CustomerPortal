@@ -88,6 +88,9 @@
     "pageSubtitle": "Section-wise table representation of content.json.",
     "backLink": "Back To Portal",
     "downloadButton": "Download JSON",
+    "expandAllButton": "Expand All",
+    "collapseAllButton": "Collapse All",
+    "sectionShortcutsTitle": "Go to Section",
     "table": {
       "keyColumn": "Key",
       "valueColumn": "Value"

@@ -4,7 +4,12 @@ const subtitleNode = document.getElementById("dataViewSubtitle");
 const backLinkNode = document.getElementById("backLink");
 const tablesRoot = document.getElementById("tablesRoot");
 const downloadButton = document.getElementById("download-json-btn");
+const expandAllButton = document.getElementById("expand-all-btn");
+const collapseAllButton = document.getElementById("collapse-all-btn");
+const shortcutTitleNode = document.getElementById("shortcut-title");
+const shortcutListNode = document.getElementById("shortcut-list");
 let pageContent = null;
+const sectionIds = [];
 
 function flattenObject(obj, prefix = "") {
   const rows = [];
@@ -72,10 +77,23 @@ function setValueByPath(target, path, value) {
 function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
   const section = document.createElement("section");
   section.className = "data-section";
+  const sectionId = `section-${sectionName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  section.id = sectionId;
+  sectionIds.push({ id: sectionId, name: sectionName });
 
-  const heading = document.createElement("h2");
-  heading.textContent = sectionName;
-  section.appendChild(heading);
+  const details = document.createElement("details");
+  details.open = true;
+  const summary = document.createElement("summary");
+  summary.className = "section-summary";
+  const title = document.createElement("span");
+  title.textContent = sectionName;
+  const link = document.createElement("a");
+  link.className = "summary-link";
+  link.href = `#${sectionId}`;
+  link.textContent = "Link";
+  summary.appendChild(title);
+  summary.appendChild(link);
+  details.appendChild(summary);
 
   const table = document.createElement("table");
 
@@ -118,8 +136,45 @@ function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
   }
 
   table.appendChild(tbody);
-  section.appendChild(table);
+  details.appendChild(table);
+  section.appendChild(details);
   tablesRoot.appendChild(section);
+}
+
+function wireExpandCollapseControls() {
+  const allDetails = () => Array.from(tablesRoot.querySelectorAll("details"));
+
+  if (expandAllButton) {
+    expandAllButton.addEventListener("click", () => {
+      allDetails().forEach((item) => { item.open = true; });
+    });
+  }
+
+  if (collapseAllButton) {
+    collapseAllButton.addEventListener("click", () => {
+      allDetails().forEach((item) => { item.open = false; });
+    });
+  }
+}
+
+function renderShortcuts(title) {
+  if (!shortcutListNode) {
+    return;
+  }
+
+  if (shortcutTitleNode) {
+    shortcutTitleNode.textContent = title;
+  }
+
+  shortcutListNode.innerHTML = "";
+  sectionIds.forEach((item) => {
+    const li = document.createElement("li");
+    const anchor = document.createElement("a");
+    anchor.href = `#${item.id}`;
+    anchor.textContent = item.name;
+    li.appendChild(anchor);
+    shortcutListNode.appendChild(li);
+  });
 }
 
 function wireDownload() {
@@ -159,6 +214,8 @@ async function bootstrap() {
   subtitleNode.textContent = content?.dataView?.pageSubtitle ?? "";
   backLinkNode.textContent = content?.dataView?.backLink ?? "Back to Home";
   downloadButton.textContent = content?.dataView?.downloadButton ?? "Download JSON";
+  expandAllButton.textContent = content?.dataView?.expandAllButton ?? "Expand All";
+  collapseAllButton.textContent = content?.dataView?.collapseAllButton ?? "Collapse All";
 
   const keyHeader = content?.dataView?.table?.keyColumn ?? "Key";
   const valueHeader = content?.dataView?.table?.valueColumn ?? "Value";
@@ -167,7 +224,9 @@ async function bootstrap() {
     renderTable(sectionName, sectionData, keyHeader, valueHeader);
   }
 
+  renderShortcuts(content?.dataView?.sectionShortcutsTitle ?? "Section Shortcuts");
   wireDownload();
+  wireExpandCollapseControls();
 }
 
 bootstrap().catch((err) => {
