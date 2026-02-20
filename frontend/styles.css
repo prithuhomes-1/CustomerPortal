@@ -155,11 +155,12 @@ body {
   content: "";
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
-  width: 58px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
   background: linear-gradient(180deg, #f5f5f8 0%, #d5d7de 100%);
-  border-radius: 999px;
+  border-radius: 50%;
   box-shadow: inset -8px 0 16px rgba(0, 0, 0, 0.15);
 }
 
@@ -316,6 +317,12 @@ body {
 
 .projects-section {
   padding: 5rem 2rem;
+}
+
+.projects-section .cta-buttons {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
 }
 
 .project-panel {
