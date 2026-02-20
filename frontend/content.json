@@ -61,9 +61,9 @@
     "title": "My Projects",
     "subtitle": "Your API response appears below after authentication.",
     "actions": {
-      "loadProjects": "Load Projects",
-      "loadAgreements": "Load Agreements",
-      "loadMilestones": "Load Milestones",
+      "loadProjects": "Project Details",
+      "loadAgreements": "Agreement",
+      "loadMilestones": "Payment Milestones",
       "agreementsEntityKey": "customeragreements",
       "milestonesEntityKey": "paymentmilestones"
     },
