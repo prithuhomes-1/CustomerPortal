@@ -11,6 +11,19 @@ const shortcutListNode = document.getElementById("shortcut-list");
 let pageContent = null;
 const sectionIds = [];
 
+const recordPathLinkMap = {
+  "projects.title": "./index.html#projects-title",
+  "projects.subtitle": "./index.html#projects-subtitle",
+  "projects.actions.loadProjects": "./index.html#load-projects-btn",
+  "projects.actions.loadAgreements": "./index.html#load-agreements-btn",
+  "projects.actions.loadMilestones": "./index.html#load-milestones-btn",
+  "hero.title": "./index.html#hero-title",
+  "hero.subtitle": "./index.html#hero-subtitle",
+  "features.title": "./index.html#features-title",
+  "features.subtitle": "./index.html#features-subtitle",
+  "footer.text": "./index.html#footer-text"
+};
+
 function flattenObject(obj, prefix = "") {
   const rows = [];
   for (const [key, value] of Object.entries(obj)) {
@@ -74,7 +87,32 @@ function setValueByPath(target, path, value) {
   cursor[keys[keys.length - 1]] = value;
 }
 
-function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
+function getRecordLink(fullPath) {
+  if (recordPathLinkMap[fullPath]) {
+    return recordPathLinkMap[fullPath];
+  }
+
+  const sectionName = fullPath.split(".")[0];
+  if (sectionName === "projects") {
+    return "./index.html#projects";
+  }
+  if (sectionName === "features") {
+    return "./index.html#trainings";
+  }
+  if (sectionName === "hero" || sectionName === "brand" || sectionName === "auth" || sectionName === "navigation" || sectionName === "site") {
+    return "./index.html#top";
+  }
+  if (sectionName === "footer") {
+    return "./index.html#footer-text";
+  }
+  if (sectionName === "dataView") {
+    return "./data-view.html#top";
+  }
+
+  return "./index.html#top";
+}
+
+function renderTable(sectionName, sectionData, keyHeader, valueHeader, linkHeader, linkLabel) {
   const section = document.createElement("section");
   section.className = "data-section";
   const sectionId = `section-${sectionName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -98,7 +136,7 @@ function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
   const table = document.createElement("table");
 
   const thead = document.createElement("thead");
-  thead.innerHTML = `<tr><th>${keyHeader}</th><th>${valueHeader}</th></tr>`;
+  thead.innerHTML = `<tr><th>${keyHeader}</th><th>${valueHeader}</th><th>${linkHeader}</th></tr>`;
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
@@ -107,6 +145,7 @@ function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
     const tr = document.createElement("tr");
     const keyCell = document.createElement("td");
     const valueCell = document.createElement("td");
+    const linkCell = document.createElement("td");
 
     const fullPath = `${sectionName}.${row.key}`;
     const editor = document.createElement("textarea");
@@ -130,8 +169,14 @@ function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
 
     keyCell.textContent = row.key;
     valueCell.appendChild(editor);
+    const rowLink = document.createElement("a");
+    rowLink.href = getRecordLink(fullPath);
+    rowLink.textContent = linkLabel;
+    rowLink.className = "summary-link";
+    linkCell.appendChild(rowLink);
     tr.appendChild(keyCell);
     tr.appendChild(valueCell);
+    tr.appendChild(linkCell);
     tbody.appendChild(tr);
   }
 
@@ -219,9 +264,11 @@ async function bootstrap() {
 
   const keyHeader = content?.dataView?.table?.keyColumn ?? "Key";
   const valueHeader = content?.dataView?.table?.valueColumn ?? "Value";
+  const linkHeader = content?.dataView?.table?.linkColumn ?? "Link";
+  const linkLabel = content?.dataView?.recordLinkLabel ?? "Go";
 
   for (const [sectionName, sectionData] of Object.entries(content)) {
-    renderTable(sectionName, sectionData, keyHeader, valueHeader);
+    renderTable(sectionName, sectionData, keyHeader, valueHeader, linkHeader, linkLabel);
   }
 
   renderShortcuts(content?.dataView?.sectionShortcutsTitle ?? "Section Shortcuts");

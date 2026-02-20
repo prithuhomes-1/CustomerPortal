@@ -91,9 +91,11 @@
     "expandAllButton": "Expand All",
     "collapseAllButton": "Collapse All",
     "sectionShortcutsTitle": "Go to Section",
+    "recordLinkLabel": "Go",
     "table": {
       "keyColumn": "Key",
-      "valueColumn": "Value"
+      "valueColumn": "Value",
+      "linkColumn": "Link"
     }
   }
 }
