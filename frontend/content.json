@@ -60,6 +60,48 @@
   "projects": {
     "title": "My Projects",
     "subtitle": "Your API response appears below after authentication.",
+    "sections": {
+      "projects": {
+        "title": "Project Details",
+        "subtitle": "Customer projects linked to your profile.",
+        "emptyText": "No project records available."
+      },
+      "agreements": {
+        "title": "Agreement",
+        "subtitle": "Customer agreements linked to your projects.",
+        "emptyText": "No agreement records available."
+      },
+      "milestones": {
+        "title": "Payment Milestones",
+        "subtitle": "Payment milestones linked to your agreements.",
+        "emptyText": "No payment milestone records available."
+      }
+    },
+    "displayFields": {
+      "projects": [
+        { "key": "sgr_name", "label": "Project Name" },
+        { "key": "sgr_projectid", "label": "Project ID" },
+        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" },
+        { "key": "modifiedon@OData.Community.Display.V1.FormattedValue", "label": "Modified On" },
+        { "key": "statecode@OData.Community.Display.V1.FormattedValue", "label": "State" }
+      ],
+      "agreements": [
+        { "key": "sgr_name", "label": "Agreement Name" },
+        { "key": "sgr_customeragreementid", "label": "Agreement ID" },
+        { "key": "sgr_totalvalue@OData.Community.Display.V1.FormattedValue", "label": "Total Value" },
+        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
+        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" }
+      ],
+      "milestones": [
+        { "key": "sgr_name", "label": "Milestone Name" },
+        { "key": "sgr_sequence", "label": "Sequence" },
+        { "key": "sgr_amount@OData.Community.Display.V1.FormattedValue", "label": "Amount" },
+        { "key": "sgr_recdamount@OData.Community.Display.V1.FormattedValue", "label": "Received Amount" },
+        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
+        { "key": "sgr_duedate@OData.Community.Display.V1.FormattedValue", "label": "Due Date" },
+        { "key": "sgr_recdon@OData.Community.Display.V1.FormattedValue", "label": "Received On" }
+      ]
+    },
     "actions": {
       "loadProjects": "Project Details",
       "loadAgreements": "Agreement",

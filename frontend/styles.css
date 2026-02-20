@@ -374,6 +374,55 @@ body {
   font-size: 0.9rem;
 }
 
+.table-empty {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.glass-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(236, 246, 255, 0.28);
+  box-shadow: 0 10px 30px rgba(10, 25, 60, 0.14);
+  backdrop-filter: blur(10px);
+}
+
+.glass-caption {
+  background: linear-gradient(90deg, rgba(7, 160, 132, 0.93), rgba(17, 150, 187, 0.93));
+  color: #fff;
+  font-weight: 700;
+  padding: 0.85rem 1rem;
+}
+
+.glass-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.glass-table th,
+.glass-table td {
+  padding: 0.85rem 0.95rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(180, 199, 218, 0.55);
+}
+
+.glass-table th {
+  background: rgba(8, 146, 127, 0.9);
+  color: #fff;
+  font-weight: 600;
+}
+
+.glass-table tbody tr:nth-child(even) {
+  background: rgba(230, 239, 248, 0.68);
+}
+
+.rank-col {
+  width: 58px;
+  text-align: center;
+}
+
 .project-panel.error {
   border-color: #f3b2aa;
   margin-top: 1rem;

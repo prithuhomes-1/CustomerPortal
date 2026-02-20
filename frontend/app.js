@@ -154,7 +154,7 @@ function applyContent() {
   ui.loadProjectsLabel.textContent = text("projects.actions.loadProjects", "Load Projects");
   ui.loadAgreementsLabel.textContent = text("projects.actions.loadAgreements", "Load Agreements");
   ui.loadMilestonesLabel.textContent = text("projects.actions.loadMilestones", "Load Milestones");
-  ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
+  ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.default", "No project data loaded."))}</p>`;
   ui.footerText.textContent = text("footer.text", "");
 
   const videoUrl = text("hero.videoUrl", "");
@@ -187,6 +187,69 @@ function showError(err) {
 function clearError() {
   ui.errorPanel.classList.add("hidden");
   ui.errorView.textContent = "";
+}
+
+function getSectionConfig(tabKey) {
+  return content?.projects?.sections?.[tabKey] ?? {};
+}
+
+function getFieldConfig(tabKey) {
+  return content?.projects?.displayFields?.[tabKey] ?? [];
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderDataTable(tabKey, records) {
+  const section = getSectionConfig(tabKey);
+  const fieldConfig = getFieldConfig(tabKey);
+  const title = section.title || tabKey;
+  const subtitle = section.subtitle || "";
+
+  ui.projectsSubtitle.textContent = subtitle;
+
+  if (!Array.isArray(records) || records.length === 0) {
+    const emptyText = section.emptyText || text("projects.placeholders.default", "No project data loaded.");
+    ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(emptyText)}</p>`;
+    return;
+  }
+
+  const fields = Array.isArray(fieldConfig) && fieldConfig.length > 0
+    ? fieldConfig
+    : Object.keys(records[0]).map((key) => ({ key, label: key }));
+
+  const headCells = fields
+    .map((field) => `<th>${escapeHtml(field.label || field.key)}</th>`)
+    .join("");
+
+  const rows = records
+    .map((record, index) => {
+      const cells = fields
+        .map((field) => {
+          const raw = record[field.key];
+          const value = raw === null || raw === undefined || raw === "" ? "-" : raw;
+          return `<td>${escapeHtml(value)}</td>`;
+        })
+        .join("");
+      return `<tr><td class="rank-col">${index + 1}</td>${cells}</tr>`;
+    })
+    .join("");
+
+  ui.projectsView.innerHTML = `
+    <div class="glass-wrap">
+      <div class="glass-caption">${escapeHtml(title)}</div>
+      <table class="glass-table">
+        <thead><tr><th class="rank-col">#</th>${headCells}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function setActiveTab(entity) {
@@ -263,7 +326,7 @@ async function logout() {
   dataCache.loaded = false;
   dataCache.loading = false;
   setActiveTab("projects");
-  ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
+  ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.default", "No project data loaded."))}</p>`;
 }
 
 async function getAccessToken() {
@@ -328,11 +391,11 @@ function renderActiveData() {
         : dataCache.milestones;
 
   if (value === null) {
-    ui.projectsView.textContent = text("projects.placeholders.loadProjectsFirst", "Click Project Details to load all sections.");
+    ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.loadProjectsFirst", "Click Project Details to load all sections."))}</p>`;
     return;
   }
 
-  ui.projectsView.textContent = JSON.stringify(value, null, 2);
+  renderDataTable(activeDataTab, value);
 }
 
 async function loadAllProjectData() {
@@ -342,7 +405,7 @@ async function loadAllProjectData() {
 
   clearError();
   dataCache.loading = true;
-  ui.projectsView.textContent = text("projects.placeholders.loadingAll", "Loading project details, agreements, and milestones...");
+  ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.loadingAll", "Loading project details, agreements, and milestones..."))}</p>`;
 
   try {
     const token = await getAccessToken();
@@ -362,7 +425,7 @@ async function loadAllProjectData() {
     renderActiveData();
     document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
-    ui.projectsView.textContent = text("projects.placeholders.default", "No project data loaded.");
+    ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.default", "No project data loaded."))}</p>`;
     showError(err);
   } finally {
     dataCache.loading = false;
