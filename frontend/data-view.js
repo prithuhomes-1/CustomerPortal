@@ -15,11 +15,58 @@ function flattenObject(obj, prefix = "") {
     } else {
       rows.push({
         key: path,
-        value: JSON.stringify(value)
+        value,
+        valueType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value
       });
     }
   }
   return rows;
+}
+
+function parseEditedValue(rawValue, valueType) {
+  if (valueType === "string") {
+    return rawValue;
+  }
+
+  if (valueType === "number") {
+    const parsed = Number(rawValue);
+    if (Number.isNaN(parsed)) {
+      throw new Error("Expected number");
+    }
+    return parsed;
+  }
+
+  if (valueType === "boolean") {
+    const normalized = String(rawValue).trim().toLowerCase();
+    if (normalized === "true") {
+      return true;
+    }
+    if (normalized === "false") {
+      return false;
+    }
+    throw new Error("Expected true/false");
+  }
+
+  if (valueType === "null") {
+    return null;
+  }
+
+  if (valueType === "array" || valueType === "object") {
+    return JSON.parse(rawValue);
+  }
+
+  return rawValue;
+}
+
+function setValueByPath(target, path, value) {
+  const keys = path.split(".");
+  let cursor = target;
+
+  for (let i = 0; i < keys.length - 1; i += 1) {
+    cursor = cursor[keys[i]];
+  }
+
+  cursor[keys[keys.length - 1]] = value;
 }
 
 function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
@@ -42,8 +89,29 @@ function renderTable(sectionName, sectionData, keyHeader, valueHeader) {
     const tr = document.createElement("tr");
     const keyCell = document.createElement("td");
     const valueCell = document.createElement("td");
+
+    const fullPath = `${sectionName}.${row.key}`;
+    const editor = document.createElement("textarea");
+    editor.className = "value-editor";
+    editor.value =
+      row.valueType === "object" || row.valueType === "array"
+        ? JSON.stringify(row.value, null, 2)
+        : row.value === null
+          ? "null"
+          : String(row.value);
+    editor.rows = row.valueType === "object" || row.valueType === "array" ? 4 : 1;
+    editor.addEventListener("change", () => {
+      try {
+        const parsed = parseEditedValue(editor.value, row.valueType);
+        setValueByPath(pageContent, fullPath, parsed);
+        editor.classList.remove("editor-invalid");
+      } catch {
+        editor.classList.add("editor-invalid");
+      }
+    });
+
     keyCell.textContent = row.key;
-    valueCell.textContent = row.value;
+    valueCell.appendChild(editor);
     tr.appendChild(keyCell);
     tr.appendChild(valueCell);
     tbody.appendChild(tr);
