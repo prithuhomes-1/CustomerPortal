@@ -619,28 +619,36 @@ public class GetCustomerProjects
         // Fallback: if the access flag is actually stored on contact, evaluate it there as well.
         if (!hasAccess)
         {
-            var contactAccessUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={contactIdField} eq '{escapedContactId}'&$select={projectAccessField}&$top=1";
-            var contactContent = await SendDataverseGetAsync(contactAccessUrl, dataverseToken);
-            using var contactDoc = JsonDocument.Parse(contactContent);
-            if (contactDoc.RootElement.TryGetProperty("value", out var contactValues) && contactValues.ValueKind == JsonValueKind.Array && contactValues.GetArrayLength() > 0)
+            try
             {
-                var contactRecord = contactValues[0];
-                if (contactRecord.TryGetProperty(projectAccessField, out var valueProp))
+                var contactAccessUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={contactIdField} eq '{escapedContactId}'&$select={projectAccessField}&$top=1";
+                var contactContent = await SendDataverseGetAsync(contactAccessUrl, dataverseToken);
+                using var contactDoc = JsonDocument.Parse(contactContent);
+                if (contactDoc.RootElement.TryGetProperty("value", out var contactValues) && contactValues.ValueKind == JsonValueKind.Array && contactValues.GetArrayLength() > 0)
                 {
-                    var raw = valueProp.ValueKind switch
+                    var contactRecord = contactValues[0];
+                    if (contactRecord.TryGetProperty(projectAccessField, out var valueProp))
                     {
-                        JsonValueKind.Number => valueProp.GetRawText(),
-                        JsonValueKind.String => valueProp.GetString() ?? string.Empty,
-                        JsonValueKind.True => "true",
-                        JsonValueKind.False => "false",
-                        _ => string.Empty
-                    };
+                        var raw = valueProp.ValueKind switch
+                        {
+                            JsonValueKind.Number => valueProp.GetRawText(),
+                            JsonValueKind.String => valueProp.GetString() ?? string.Empty,
+                            JsonValueKind.True => "true",
+                            JsonValueKind.False => "false",
+                            _ => string.Empty
+                        };
 
-                    if (string.Equals(raw, allowedValue, StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasAccess = true;
+                        if (string.Equals(raw, allowedValue, StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasAccess = true;
+                        }
                     }
                 }
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Contact-level access check failed. Returning no access. Field: {Field}, Table: {Table}", projectAccessField, contactsTable);
+                hasAccess = false;
             }
         }
 
