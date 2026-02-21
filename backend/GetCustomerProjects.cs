@@ -576,9 +576,7 @@ public class GetCustomerProjects
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
         var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "sgr_projects");
         var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_sgr_customer_value");
-        var projectAccessField = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessField", "sgr_project");
-        var contactsTable = GetEnvironmentVariableOrDefault("Dataverse_ContactsTable", "contacts");
-        var contactIdField = GetEnvironmentVariableOrDefault("Dataverse_ContactIdField", "contactid");
+        var projectAccessField = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessField", "sgr_stage");
         var allowedValue = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessAllowedValue", "1");
         var escapedContactId = EscapeODataString(contactId);
         var hasAccess = false;
@@ -613,43 +611,8 @@ public class GetCustomerProjects
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, "Project-level access check failed. Falling back to contact-level check. Field: {Field}, Table: {Table}", projectAccessField, projectsTable);
-        }
-
-        // Fallback: if the access flag is actually stored on contact, evaluate it there as well.
-        if (!hasAccess)
-        {
-            try
-            {
-                var contactAccessUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={contactIdField} eq '{escapedContactId}'&$select={projectAccessField}&$top=1";
-                var contactContent = await SendDataverseGetAsync(contactAccessUrl, dataverseToken);
-                using var contactDoc = JsonDocument.Parse(contactContent);
-                if (contactDoc.RootElement.TryGetProperty("value", out var contactValues) && contactValues.ValueKind == JsonValueKind.Array && contactValues.GetArrayLength() > 0)
-                {
-                    var contactRecord = contactValues[0];
-                    if (contactRecord.TryGetProperty(projectAccessField, out var valueProp))
-                    {
-                        var raw = valueProp.ValueKind switch
-                        {
-                            JsonValueKind.Number => valueProp.GetRawText(),
-                            JsonValueKind.String => valueProp.GetString() ?? string.Empty,
-                            JsonValueKind.True => "true",
-                            JsonValueKind.False => "false",
-                            _ => string.Empty
-                        };
-
-                        if (string.Equals(raw, allowedValue, StringComparison.OrdinalIgnoreCase))
-                        {
-                            hasAccess = true;
-                        }
-                    }
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, "Contact-level access check failed. Returning no access. Field: {Field}, Table: {Table}", projectAccessField, contactsTable);
-                hasAccess = false;
-            }
+            _logger.LogWarning(ex, "Project-level access check failed. Returning no access. Field: {Field}, Table: {Table}", projectAccessField, projectsTable);
+            hasAccess = false;
         }
 
         _logger.LogInformation("Resolved product access. ContactId: {ContactId}, Access: {HasAccess}", contactId, hasAccess);
@@ -660,7 +623,6 @@ public class GetCustomerProjects
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
         var productSetsTable = GetRequiredEnvironmentVariable("Dataverse_ProductSetsTable");
-        var productSetsProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_ProductSetsProjectLookupField");
         var productSetsSelectFields = Environment.GetEnvironmentVariable("Dataverse_ProductSetsSelectFields")?.Trim();
         var productSetsIdField = GetEnvironmentVariableOrDefault("Dataverse_ProductSetsIdField", "sgr_productsetid");
         var productSetItemsTable = GetRequiredEnvironmentVariable("Dataverse_ProductSetItemsTable");
@@ -670,22 +632,13 @@ public class GetCustomerProjects
         var productMastersTable = GetRequiredEnvironmentVariable("Dataverse_ProductMastersTable");
         var productMastersIdField = GetEnvironmentVariableOrDefault("Dataverse_ProductMastersIdField", "sgr_productmasterid");
         var productMastersSelectFields = Environment.GetEnvironmentVariable("Dataverse_ProductMastersSelectFields")?.Trim();
-
-        var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
-        if (projectIds.Count == 0)
-        {
-            _logger.LogInformation("No projects found for product selection. ContactId: {ContactId}", contactId);
-            return "{\"productSets\":[],\"productSetItems\":[],\"productMasters\":[]}";
-        }
-
-        var productSetFilter = string.Join(" or ", projectIds.Select(id => $"{productSetsProjectLookupField} eq '{EscapeODataString(id)}'"));
-        var productSetsUrl = $"{dataverseUrl}/api/data/v9.2/{productSetsTable}?$filter={productSetFilter}{BuildSelectClause(productSetsSelectFields)}";
+        var productSetsUrl = $"{dataverseUrl}/api/data/v9.2/{productSetsTable}?{BuildSelectQueryWithoutFilter(productSetsSelectFields)}";
         var productSetsRaw = await GetValueArrayRawAsync(productSetsUrl, dataverseToken, "product sets");
         var productSetIds = ExtractIdValuesFromRawArray(productSetsRaw, productSetsIdField);
 
         if (productSetIds.Count == 0)
         {
-            _logger.LogInformation("No product sets found for projects. ContactId: {ContactId}, ProjectCount: {ProjectCount}", contactId, projectIds.Count);
+            _logger.LogInformation("No product sets found. ContactId: {ContactId}", contactId);
             return "{\"productSets\":[],\"productSetItems\":[],\"productMasters\":[]}";
         }
 
@@ -840,6 +793,11 @@ public class GetCustomerProjects
     private static string BuildSelectClause(string? selectFields)
     {
         return string.IsNullOrWhiteSpace(selectFields) ? string.Empty : $"&$select={selectFields}";
+    }
+
+    private static string BuildSelectQueryWithoutFilter(string? selectFields)
+    {
+        return string.IsNullOrWhiteSpace(selectFields) ? "$top=5000" : $"$select={selectFields}&$top=5000";
     }
 
     private static string? GetQueryParameter(Uri requestUri, string key)
