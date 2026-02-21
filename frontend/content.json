@@ -185,10 +185,10 @@
     "cards": {
       "fields": [
         { "key": "sgr_name", "label": "Product Name" },
-        { "key": "sgr_make", "label": "Make / Brand" },
+        { "key": "sgr_make@OData.Community.Display.V1.FormattedValue", "label": "Make / Brand" },
         { "key": "sgr_productcode", "label": "Product Code" }
       ],
-      "imageField": "sgr_productimage",
+      "imageFields": ["sgr_productimage", "sgr_productimage2", "sgr_productimage3"],
       "imageAlt": "Product image"
     }
   },

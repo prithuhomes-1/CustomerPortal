@@ -208,6 +208,39 @@ function getFieldValue(record, logicalName) {
   return formatted ?? "";
 }
 
+function getDisplayFieldValue(record, fieldKey) {
+  if (!record || !fieldKey) {
+    return "-";
+  }
+
+  if (fieldKey.includes("@")) {
+    const value = record[fieldKey];
+    return value === null || value === undefined || value === "" ? "-" : value;
+  }
+
+  const formatted = record[`${fieldKey}@OData.Community.Display.V1.FormattedValue`];
+  if (formatted !== null && formatted !== undefined && String(formatted) !== "") {
+    return formatted;
+  }
+
+  const raw = record[fieldKey];
+  return raw === null || raw === undefined || raw === "" ? "-" : raw;
+}
+
+function normalizeImageUrls(card) {
+  const configuredImageFields = content?.productSelection?.cards?.imageFields;
+  const fallbackField = getFieldName("productSelection.cards.imageField", "sgr_productimage");
+  const fields = Array.isArray(configuredImageFields) && configuredImageFields.length > 0
+    ? configuredImageFields
+    : [fallbackField];
+
+  const urls = fields
+    .map((field) => String(card?.[field] ?? "").trim())
+    .filter((url) => url.length > 0);
+
+  return [...new Set(urls)];
+}
+
 function setSelectOptions(selectEl, options, allLabel) {
   selectEl.innerHTML = "";
   const allOption = document.createElement("option");
@@ -284,9 +317,8 @@ function applyFilters() {
 function renderCards() {
   const selectedSetId = ui.productSetSelect.value;
   const itemSetLookup = getFieldName("productSelection.fields.itemProductSetLookup", "_sgr_productset_value");
-  const itemMasterLookup = getFieldName("productSelection.fields.itemProductMasterLookup", "_sgr_productmaster_value");
+  const itemMasterLookup = getFieldName("productSelection.fields.itemProductMasterLookup", "_sgr_product_value");
   const masterIdField = getFieldName("productSelection.fields.masterId", "sgr_productmasterid");
-  const imageField = getFieldName("productSelection.cards.imageField", "sgr_imageurl");
   const imageAlt = text("productSelection.cards.imageAlt", "Product image");
   const fields = content?.productSelection?.cards?.fields ?? [];
 
@@ -308,19 +340,56 @@ function renderCards() {
 
   ui.status.textContent = `${cards.length} products loaded.`;
   ui.cards.innerHTML = cards.map((card) => {
-    const imageUrl = String(card?.[imageField] ?? "").trim();
+    const images = normalizeImageUrls(card);
+    const imageUrl = images.length > 0 ? images[0] : "";
     const rows = fields.map((field) => {
-      const value = card?.[field.key] ?? "-";
+      const value = getDisplayFieldValue(card, field.key);
       return `<div class="product-card-row"><span>${escapeHtml(field.label)}</span><strong>${escapeHtml(value)}</strong></div>`;
     }).join("");
 
+    const hasCarousel = images.length > 1;
+    const dots = images.map((_, idx) => `<span class="product-card-dot${idx === 0 ? " active" : ""}"></span>`).join("");
+    const sideClass = "zoom-right";
+
     return `
-      <article class="product-card">
-        <div class="product-card-image">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(imageAlt)}" />` : ""}</div>
+      <article class="product-card ${sideClass}" data-image-index="0" data-images='${escapeHtml(JSON.stringify(images))}'>
+        <div class="product-card-image-wrap">
+          <div class="product-card-image">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(imageAlt)}" />` : ""}</div>
+          <div class="product-card-zoom">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(imageAlt)}" />` : ""}</div>
+          ${hasCarousel ? `<button class="product-card-nav prev" type="button" aria-label="Previous image">&#10094;</button>` : ""}
+          ${hasCarousel ? `<button class="product-card-nav next" type="button" aria-label="Next image">&#10095;</button>` : ""}
+          ${hasCarousel ? `<div class="product-card-dots">${dots}</div>` : ""}
+        </div>
         <div class="product-card-body">${rows}</div>
       </article>
     `;
   }).join("");
+}
+
+function updateCardImage(cardEl, nextIndex) {
+  const imagesRaw = cardEl.getAttribute("data-images") || "[]";
+  const images = JSON.parse(imagesRaw);
+  if (!Array.isArray(images) || images.length === 0) {
+    return;
+  }
+
+  const normalizedIndex = ((nextIndex % images.length) + images.length) % images.length;
+  cardEl.setAttribute("data-image-index", String(normalizedIndex));
+  const nextUrl = images[normalizedIndex];
+
+  const mainImg = cardEl.querySelector(".product-card-image img");
+  const zoomImg = cardEl.querySelector(".product-card-zoom img");
+  if (mainImg) {
+    mainImg.src = nextUrl;
+  }
+  if (zoomImg) {
+    zoomImg.src = nextUrl;
+  }
+
+  const dots = cardEl.querySelectorAll(".product-card-dot");
+  dots.forEach((dot, index) => {
+    dot.classList.toggle("active", index === normalizedIndex);
+  });
 }
 
 async function loadSelectionData() {
@@ -404,6 +473,44 @@ function wireEvents() {
   ui.spaceCategorySelect.addEventListener("change", applyFilters);
   ui.productSetSelect.addEventListener("change", renderCards);
   ui.compareBtn.addEventListener("click", renderCards);
+  ui.cards.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const button = target.closest(".product-card-nav");
+    if (!button) {
+      return;
+    }
+
+    const cardEl = target.closest(".product-card");
+    if (!(cardEl instanceof HTMLElement)) {
+      return;
+    }
+
+    const current = Number(cardEl.getAttribute("data-image-index") || "0");
+    const delta = button.classList.contains("next") ? 1 : -1;
+    updateCardImage(cardEl, current + delta);
+  });
+
+  ui.cards.addEventListener("mouseenter", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const cardEl = target.closest(".product-card");
+    if (!(cardEl instanceof HTMLElement)) {
+      return;
+    }
+
+    const rect = cardEl.getBoundingClientRect();
+    const previewWidth = 360;
+    const shouldOpenLeft = rect.right + previewWidth > window.innerWidth - 24;
+    cardEl.classList.toggle("zoom-left", shouldOpenLeft);
+    cardEl.classList.toggle("zoom-right", !shouldOpenLeft);
+  }, true);
 }
 
 function initializeMsal() {
