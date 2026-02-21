@@ -482,18 +482,40 @@ public class GetCustomerProjects
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
         var fifthTable = GetRequiredEnvironmentVariable("Dataverse_5thTable");
-        var fifthFourthLookupField = GetRequiredEnvironmentVariable("Dataverse_5thFourthLookupField");
+        var fifthLookupLevel = GetEnvironmentVariableOrDefault("Dataverse_5thLookupLevel", "Third");
+        var fifthThirdLookupField = Environment.GetEnvironmentVariable("Dataverse_5thThirdLookupField");
+        var fifthFourthLookupField = Environment.GetEnvironmentVariable("Dataverse_5thFourthLookupField");
         var fifthSelectFields = Environment.GetEnvironmentVariable("Dataverse_5thSelectFields")?.Trim();
 
-        var fourthIds = await GetFourthIdsForContactAsync(contactId, dataverseToken);
-        if (fourthIds.Count == 0)
+        List<string> parentIds;
+        string parentLookupField;
+        string parentLevelLabel;
+
+        if (string.Equals(fifthLookupLevel, "Fourth", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogInformation("No 4th table records found for 5th table lookup. ContactId: {ContactId}", contactId);
+            parentIds = await GetFourthIdsForContactAsync(contactId, dataverseToken);
+            parentLookupField = !string.IsNullOrWhiteSpace(fifthFourthLookupField)
+                ? fifthFourthLookupField
+                : GetRequiredEnvironmentVariable("Dataverse_5thFourthLookupField");
+            parentLevelLabel = "4th";
+        }
+        else
+        {
+            parentIds = await GetThirdIdsForContactAsync(contactId, dataverseToken);
+            parentLookupField = !string.IsNullOrWhiteSpace(fifthThirdLookupField)
+                ? fifthThirdLookupField
+                : GetEnvironmentVariableOrDefault("Dataverse_5thFourthLookupField", "_sgr_customeragreement_value");
+            parentLevelLabel = "3rd";
+        }
+
+        if (parentIds.Count == 0)
+        {
+            _logger.LogInformation("No {ParentLevel} table records found for 5th table lookup. ContactId: {ContactId}", parentLevelLabel, contactId);
             return "[]";
         }
 
-        var fourthFilter = string.Join(" or ", fourthIds.Select(id => $"{fifthFourthLookupField} eq '{EscapeODataString(id)}'"));
-        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{fifthTable}?$filter={fourthFilter}{BuildSelectClause(fifthSelectFields)}";
+        var parentFilter = string.Join(" or ", parentIds.Select(id => $"{parentLookupField} eq '{EscapeODataString(id)}'"));
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{fifthTable}?$filter={parentFilter}{BuildSelectClause(fifthSelectFields)}";
         var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
 
         using var jsonDoc = JsonDocument.Parse(content);
@@ -502,7 +524,7 @@ public class GetCustomerProjects
             return "[]";
         }
 
-        _logger.LogInformation("Retrieved 5th table records. Table: {Table}, ContactId: {ContactId}, FourthRecordCount: {FourthRecordCount}, RecordCount: {RecordCount}", fifthTable, contactId, fourthIds.Count, values.GetArrayLength());
+        _logger.LogInformation("Retrieved 5th table records. Table: {Table}, ContactId: {ContactId}, ParentLevel: {ParentLevel}, ParentRecordCount: {ParentRecordCount}, RecordCount: {RecordCount}", fifthTable, contactId, parentLevelLabel, parentIds.Count, values.GetArrayLength());
         return values.GetRawText();
     }
 
