@@ -107,11 +107,11 @@
         { "key": "sgr_recdon@OData.Community.Display.V1.FormattedValue", "label": "Received On" }
       ],
       "transactions": [
-        { "key": "sgr_name", "label": "Transaction Name" },
-        { "key": "sgr_paymenttransactionid", "label": "Transaction ID" },
-        { "key": "sgr_amount@OData.Community.Display.V1.FormattedValue", "label": "Amount" },
-        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
-        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" }
+        { "key": "sgr_paymentdate@OData.Community.Display.V1.FormattedValue", "label": "Payment Date" },
+        { "key": "_sgr_paymentmilestone_value@OData.Community.Display.V1.FormattedValue", "label": "Payment Milestone" },
+        { "key": "sgr_paymentamount@OData.Community.Display.V1.FormattedValue", "label": "Amount Paid" },
+        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Transaction Status" },
+        { "key": "sgr_proof", "label": "Proof" }
       ]
     },
     "actions": {
