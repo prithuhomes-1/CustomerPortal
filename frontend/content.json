@@ -119,10 +119,9 @@
         { "key": "sgr_proof", "label": "Proof" }
       ],
       "projectspaces": [
-        { "key": "sgr_name", "label": "Project Space" },
-        { "key": "sgr_projectspaceid", "label": "Project Space ID" },
-        { "key": "_sgr_project_value@OData.Community.Display.V1.FormattedValue", "label": "Project" },
-        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" }
+        { "key": "sgr_name", "label": "Space Name" },
+        { "key": "sgr_spacetype@OData.Community.Display.V1.FormattedValue", "label": "Space Type" },
+        { "key": "sgr_spacecategory@OData.Community.Display.V1.FormattedValue", "label": "Space Category" }
       ]
     },
     "sort": {
