@@ -577,6 +577,8 @@ public class GetCustomerProjects
         var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "sgr_projects");
         var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_sgr_customer_value");
         var projectAccessField = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessField", "sgr_project");
+        var contactsTable = GetEnvironmentVariableOrDefault("Dataverse_ContactsTable", "contacts");
+        var contactIdField = GetEnvironmentVariableOrDefault("Dataverse_ContactIdField", "contactid");
         var allowedValue = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessAllowedValue", "1");
         var escapedContactId = EscapeODataString(contactId);
         var queryUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectContactLookupField} eq '{escapedContactId}'&$select={projectAccessField}&$top=50";
@@ -604,6 +606,34 @@ public class GetCustomerProjects
                     {
                         hasAccess = true;
                         break;
+                    }
+                }
+            }
+        }
+
+        // Fallback: if the access flag is actually stored on contact, evaluate it there as well.
+        if (!hasAccess)
+        {
+            var contactAccessUrl = $"{dataverseUrl}/api/data/v9.2/{contactsTable}?$filter={contactIdField} eq '{escapedContactId}'&$select={projectAccessField}&$top=1";
+            var contactContent = await SendDataverseGetAsync(contactAccessUrl, dataverseToken);
+            using var contactDoc = JsonDocument.Parse(contactContent);
+            if (contactDoc.RootElement.TryGetProperty("value", out var contactValues) && contactValues.ValueKind == JsonValueKind.Array && contactValues.GetArrayLength() > 0)
+            {
+                var contactRecord = contactValues[0];
+                if (contactRecord.TryGetProperty(projectAccessField, out var valueProp))
+                {
+                    var raw = valueProp.ValueKind switch
+                    {
+                        JsonValueKind.Number => valueProp.GetRawText(),
+                        JsonValueKind.String => valueProp.GetString() ?? string.Empty,
+                        JsonValueKind.True => "true",
+                        JsonValueKind.False => "false",
+                        _ => string.Empty
+                    };
+
+                    if (string.Equals(raw, allowedValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasAccess = true;
                     }
                 }
             }
