@@ -496,7 +496,8 @@ body {
   right: calc(100% + 12px);
 }
 
-.product-card:hover .product-card-zoom {
+.product-card-image-wrap:hover .product-card-zoom,
+.product-card-image-wrap:focus-within .product-card-zoom {
   opacity: 1;
   visibility: visible;
   transform: scale(1);
