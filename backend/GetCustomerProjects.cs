@@ -716,7 +716,7 @@ public class GetCustomerProjects
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Dataverse GET failed. Url: {RequestUrl}, Status: {StatusCode}, Error: {Error}", requestUrl, (int)response.StatusCode, content);
-            throw new InvalidOperationException("Dataverse query failed.");
+            throw new InvalidOperationException($"Dataverse query failed. Status={(int)response.StatusCode}. Url={requestUrl}. Error={content}");
         }
 
         return content;
