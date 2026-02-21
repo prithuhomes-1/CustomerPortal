@@ -183,7 +183,7 @@ function getFormattedChoice(record, logicalName) {
 function getDistinctOptions(rows, valueKey, labelResolver) {
   const map = new Map();
   rows.forEach((row) => {
-    const value = String(row?.[valueKey] ?? "");
+    const value = String(getFieldValue(row, valueKey) ?? "");
     if (!value) {
       return;
     }
@@ -192,6 +192,20 @@ function getDistinctOptions(rows, valueKey, labelResolver) {
     }
   });
   return [...map.entries()].map(([value, label]) => ({ value, label }));
+}
+
+function getFieldValue(record, logicalName) {
+  if (!record || !logicalName) {
+    return "";
+  }
+
+  const raw = record[logicalName];
+  if (raw !== null && raw !== undefined && String(raw) !== "") {
+    return raw;
+  }
+
+  const formatted = record[`${logicalName}@OData.Community.Display.V1.FormattedValue`];
+  return formatted ?? "";
 }
 
 function setSelectOptions(selectEl, options, allLabel) {
@@ -216,9 +230,29 @@ function applyFilters() {
   const productSetIdField = getFieldName("productSelection.fields.productSetId", "sgr_productsetid");
   const productSetNameField = getFieldName("productSelection.fields.productSetName", "sgr_name");
 
+  let categoryOptions = getDistinctOptions(
+    dataState.productSets,
+    categoryField,
+    (row) => getFormattedChoice(row, categoryField)
+  );
+  if (categoryOptions.length === 0 && categoryField !== "sgr_spacetype") {
+    categoryOptions = getDistinctOptions(
+      dataState.productSets,
+      "sgr_spacetype",
+      (row) => getFormattedChoice(row, "sgr_spacetype")
+    );
+  }
+
+  const prevCategory = ui.categorySelect.value;
+  setSelectOptions(ui.categorySelect, categoryOptions, allLabel);
+  ui.categorySelect.value = categoryOptions.some((x) => x.value === prevCategory) ? prevCategory : "";
+
   const selectedCategory = ui.categorySelect.value;
+  const effectiveCategoryField = categoryOptions.length > 0 && categoryField === "sgr_category"
+    ? (getDistinctOptions(dataState.productSets, categoryField, (row) => getFormattedChoice(row, categoryField)).length > 0 ? categoryField : "sgr_spacetype")
+    : categoryField;
   const categoryFiltered = selectedCategory
-    ? dataState.productSets.filter((row) => String(row?.[categoryField] ?? "") === selectedCategory)
+    ? dataState.productSets.filter((row) => String(getFieldValue(row, effectiveCategoryField)) === selectedCategory)
     : dataState.productSets;
 
   const spaceOptions = getDistinctOptions(
@@ -232,7 +266,7 @@ function applyFilters() {
 
   const selectedSpace = ui.spaceCategorySelect.value;
   const setFiltered = selectedSpace
-    ? categoryFiltered.filter((row) => String(row?.[spaceCategoryField] ?? "") === selectedSpace)
+    ? categoryFiltered.filter((row) => String(getFieldValue(row, spaceCategoryField)) === selectedSpace)
     : categoryFiltered;
 
   const setOptions = getDistinctOptions(

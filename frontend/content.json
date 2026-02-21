@@ -179,16 +179,16 @@
       "category": "sgr_category",
       "spaceCategory": "sgr_spacecategory",
       "itemProductSetLookup": "_sgr_productset_value",
-      "itemProductMasterLookup": "_sgr_productmaster_value",
+      "itemProductMasterLookup": "_sgr_product_value",
       "masterId": "sgr_productmasterid"
     },
     "cards": {
       "fields": [
         { "key": "sgr_name", "label": "Product Name" },
-        { "key": "sgr_makebrand", "label": "Make / Brand" },
+        { "key": "sgr_make", "label": "Make / Brand" },
         { "key": "sgr_productcode", "label": "Product Code" }
       ],
-      "imageField": "sgr_imageurl",
+      "imageField": "sgr_productimage",
       "imageAlt": "Product image"
     }
   },
