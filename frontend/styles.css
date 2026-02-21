@@ -392,7 +392,7 @@ body {
 .product-card {
   border: 1px solid #88dfc8;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(6px);
   box-shadow: 0 6px 18px rgba(10, 25, 60, 0.08);
@@ -408,6 +408,9 @@ body {
 
 .product-card-image-wrap {
   position: relative;
+  overflow: hidden;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .product-card-image {
