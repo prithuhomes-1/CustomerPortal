@@ -106,6 +106,7 @@ public class GetCustomerProjects
             var thirdEntityKey = GetEnvironmentVariableOrDefault("Dataverse_3rdEntityKey", "customeragreements");
             var fourthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_4thEntityKey", "paymentmilestones");
             var fifthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_5thEntityKey", "paymenttransactions");
+            var sixthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_6thEntityKey", "projectspaces");
             var requestedEntity = GetQueryParameter(req.Url, "entity");
             var entity = string.IsNullOrWhiteSpace(requestedEntity) ? "projects" : requestedEntity.Trim().ToLowerInvariant();
 
@@ -130,10 +131,14 @@ public class GetCustomerProjects
             {
                 responseJson = await GetFifthTableAsync(contactId, dataverseToken);
             }
+            else if (entity == sixthEntityKey.ToLowerInvariant())
+            {
+                responseJson = await GetSixthTableAsync(contactId, dataverseToken);
+            }
             else
             {
                 _logger.LogWarning("Unsupported entity requested. Entity: {Entity}, OID: {OID}, ContactId: {ContactId}", entity, oid, contactId);
-                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}, {fifthEntityKey}.");
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}, {fifthEntityKey}, {sixthEntityKey}.");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -525,6 +530,34 @@ public class GetCustomerProjects
         }
 
         _logger.LogInformation("Retrieved 5th table records. Table: {Table}, ContactId: {ContactId}, ParentLevel: {ParentLevel}, ParentRecordCount: {ParentRecordCount}, RecordCount: {RecordCount}", fifthTable, contactId, parentLevelLabel, parentIds.Count, values.GetArrayLength());
+        return values.GetRawText();
+    }
+
+    private async Task<string> GetSixthTableAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var sixthTable = GetRequiredEnvironmentVariable("Dataverse_6thTable");
+        var sixthProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_6thProjectLookupField");
+        var sixthSelectFields = Environment.GetEnvironmentVariable("Dataverse_6thSelectFields")?.Trim();
+
+        var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
+        if (projectIds.Count == 0)
+        {
+            _logger.LogInformation("No project records found for 6th table lookup. ContactId: {ContactId}", contactId);
+            return "[]";
+        }
+
+        var projectFilter = string.Join(" or ", projectIds.Select(id => $"{sixthProjectLookupField} eq '{EscapeODataString(id)}'"));
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{sixthTable}?$filter={projectFilter}{BuildSelectClause(sixthSelectFields)}";
+        var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
+
+        using var jsonDoc = JsonDocument.Parse(content);
+        if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return "[]";
+        }
+
+        _logger.LogInformation("Retrieved 6th table records. Table: {Table}, ContactId: {ContactId}, ProjectCount: {ProjectCount}, RecordCount: {RecordCount}", sixthTable, contactId, projectIds.Count, values.GetArrayLength());
         return values.GetRawText();
     }
 

@@ -80,6 +80,11 @@
         "title": "Payment Transactions",
         "subtitle": "Transactions linked to your payment milestones.",
         "emptyText": "No payment transaction records available."
+      },
+      "projectspaces": {
+        "title": "Project Spaces",
+        "subtitle": "Project spaces linked directly to your projects.",
+        "emptyText": "No project space records available."
       }
     },
     "displayFields": {
@@ -112,6 +117,12 @@
         { "key": "sgr_paymentamount@OData.Community.Display.V1.FormattedValue", "label": "Amount Paid" },
         { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Transaction Status" },
         { "key": "sgr_proof", "label": "Proof" }
+      ],
+      "projectspaces": [
+        { "key": "sgr_name", "label": "Project Space" },
+        { "key": "sgr_projectspaceid", "label": "Project Space ID" },
+        { "key": "_sgr_project_value@OData.Community.Display.V1.FormattedValue", "label": "Project" },
+        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" }
       ]
     },
     "sort": {
@@ -126,18 +137,21 @@
       "loadAgreements": "Agreement",
       "loadMilestones": "Payment Milestones",
       "loadTransactions": "Payment Transactions",
+      "loadProjectSpaces": "Project Spaces",
       "agreementsEntityKey": "customeragreements",
       "milestonesEntityKey": "paymentmilestones",
-      "transactionsEntityKey": "paymenttransactions"
+      "transactionsEntityKey": "paymenttransactions",
+      "projectSpacesEntityKey": "projectspaces"
     },
     "placeholders": {
       "default": "No project data loaded.",
       "loading": "Loading projects...",
-      "loadingAll": "Loading project details, agreements, milestones, and transactions...",
+      "loadingAll": "Loading project details, agreements, milestones, transactions, and project spaces...",
       "loadProjectsFirst": "Click Project Details to load all sections.",
       "loadingAgreements": "Loading customer agreements...",
       "loadingMilestones": "Loading payment milestones...",
-      "loadingTransactions": "Loading payment transactions..."
+      "loadingTransactions": "Loading payment transactions...",
+      "loadingProjectSpaces": "Loading project spaces..."
     }
   },
   "messages": {

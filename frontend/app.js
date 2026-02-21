@@ -34,10 +34,12 @@ const ui = {
   loadAgreementsBtn: document.getElementById("load-agreements-btn"),
   loadMilestonesBtn: document.getElementById("load-milestones-btn"),
   loadTransactionsBtn: document.getElementById("load-transactions-btn"),
+  loadProjectspacesBtn: document.getElementById("load-projectspaces-btn"),
   loadProjectsLabel: document.getElementById("load-projects-label"),
   loadAgreementsLabel: document.getElementById("load-agreements-label"),
   loadMilestonesLabel: document.getElementById("load-milestones-label"),
   loadTransactionsLabel: document.getElementById("load-transactions-label"),
+  loadProjectspacesLabel: document.getElementById("load-projectspaces-label"),
   projectsView: document.getElementById("projects-view"),
   errorPanel: document.getElementById("error-panel"),
   errorView: document.getElementById("error-view"),
@@ -53,6 +55,7 @@ const dataCache = {
   agreements: null,
   milestones: null,
   transactions: null,
+  projectspaces: null,
   loaded: false,
   loading: false
 };
@@ -158,6 +161,7 @@ function applyContent() {
   ui.loadAgreementsLabel.textContent = text("projects.actions.loadAgreements", "Load Agreements");
   ui.loadMilestonesLabel.textContent = text("projects.actions.loadMilestones", "Load Milestones");
   ui.loadTransactionsLabel.textContent = text("projects.actions.loadTransactions", "Load Transactions");
+  ui.loadProjectspacesLabel.textContent = text("projects.actions.loadProjectSpaces", "Load Project Spaces");
   ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.default", "No project data loaded."))}</p>`;
   ui.footerText.textContent = text("footer.text", "");
 
@@ -297,7 +301,8 @@ function setActiveTab(entity) {
     { key: "projects", button: ui.loadProjectsBtn },
     { key: "agreements", button: ui.loadAgreementsBtn },
     { key: "milestones", button: ui.loadMilestonesBtn },
-    { key: "transactions", button: ui.loadTransactionsBtn }
+    { key: "transactions", button: ui.loadTransactionsBtn },
+    { key: "projectspaces", button: ui.loadProjectspacesBtn }
   ];
 
   mappings.forEach(({ key, button }) => {
@@ -364,6 +369,7 @@ async function logout() {
   dataCache.agreements = null;
   dataCache.milestones = null;
   dataCache.transactions = null;
+  dataCache.projectspaces = null;
   dataCache.loaded = false;
   dataCache.loading = false;
   setActiveTab("projects");
@@ -431,7 +437,9 @@ function renderActiveData() {
         ? dataCache.agreements
         : activeDataTab === "milestones"
           ? dataCache.milestones
-          : dataCache.transactions;
+          : activeDataTab === "transactions"
+            ? dataCache.transactions
+            : dataCache.projectspaces;
 
   if (value === null) {
     ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.loadProjectsFirst", "Click Project Details to load all sections."))}</p>`;
@@ -448,25 +456,28 @@ async function loadAllProjectData() {
 
   clearError();
   dataCache.loading = true;
-  ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.loadingAll", "Loading project details, agreements, milestones, and transactions..."))}</p>`;
+  ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.loadingAll", "Loading project details, agreements, milestones, transactions, and project spaces..."))}</p>`;
 
   try {
     const token = await getAccessToken();
     const agreementsEntityKey = text("projects.actions.agreementsEntityKey", "customeragreements");
     const milestonesEntityKey = text("projects.actions.milestonesEntityKey", "paymentmilestones");
     const transactionsEntityKey = text("projects.actions.transactionsEntityKey", "paymenttransactions");
+    const projectSpacesEntityKey = text("projects.actions.projectSpacesEntityKey", "projectspaces");
 
-    const [projects, agreements, milestones, transactions] = await Promise.all([
+    const [projects, agreements, milestones, transactions, projectspaces] = await Promise.all([
       fetchEntityPayload("projects", token),
       fetchEntityPayload(agreementsEntityKey, token),
       fetchEntityPayload(milestonesEntityKey, token),
-      fetchEntityPayload(transactionsEntityKey, token)
+      fetchEntityPayload(transactionsEntityKey, token),
+      fetchEntityPayload(projectSpacesEntityKey, token)
     ]);
 
     dataCache.projects = projects;
     dataCache.agreements = agreements;
     dataCache.milestones = milestones;
     dataCache.transactions = transactions;
+    dataCache.projectspaces = projectspaces;
     dataCache.loaded = true;
     renderActiveData();
     document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
@@ -500,6 +511,11 @@ async function loadMilestones() {
 
 async function loadTransactions() {
   setActiveTab("transactions");
+  renderActiveData();
+}
+
+async function loadProjectSpaces() {
+  setActiveTab("projectspaces");
   renderActiveData();
 }
 
@@ -575,6 +591,14 @@ function wireEvents() {
   ui.loadTransactionsBtn.addEventListener("click", async () => {
     try {
       await loadTransactions();
+    } catch (err) {
+      showError(err);
+    }
+  });
+
+  ui.loadProjectspacesBtn.addEventListener("click", async () => {
+    try {
+      await loadProjectSpaces();
     } catch (err) {
       showError(err);
     }
