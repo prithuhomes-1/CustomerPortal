@@ -114,6 +114,13 @@
         { "key": "sgr_proof", "label": "Proof" }
       ]
     },
+    "sort": {
+      "transactions": {
+        "key": "sgr_paymentdate",
+        "direction": "desc",
+        "type": "date"
+      }
+    },
     "actions": {
       "loadProjects": "Project Details",
       "loadAgreements": "Agreement",

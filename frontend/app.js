@@ -201,6 +201,10 @@ function getFieldConfig(tabKey) {
   return content?.projects?.displayFields?.[tabKey] ?? [];
 }
 
+function getSortConfig(tabKey) {
+  return content?.projects?.sort?.[tabKey] ?? null;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -213,6 +217,7 @@ function escapeHtml(value) {
 function renderDataTable(tabKey, records) {
   const section = getSectionConfig(tabKey);
   const fieldConfig = getFieldConfig(tabKey);
+  const sortConfig = getSortConfig(tabKey);
   const title = section.title || tabKey;
   const subtitle = section.subtitle || "";
 
@@ -228,11 +233,41 @@ function renderDataTable(tabKey, records) {
     ? fieldConfig
     : Object.keys(records[0]).map((key) => ({ key, label: key }));
 
+  let rowsData = [...records];
+  if (sortConfig?.key) {
+    const direction = String(sortConfig.direction || "asc").toLowerCase() === "desc" ? -1 : 1;
+    const key = sortConfig.key;
+    const type = String(sortConfig.type || "string").toLowerCase();
+
+    rowsData.sort((a, b) => {
+      const av = a?.[key];
+      const bv = b?.[key];
+
+      if (type === "date") {
+        const at = Date.parse(String(av || ""));
+        const bt = Date.parse(String(bv || ""));
+        const safeA = Number.isNaN(at) ? 0 : at;
+        const safeB = Number.isNaN(bt) ? 0 : bt;
+        return (safeA - safeB) * direction;
+      }
+
+      if (type === "number") {
+        const an = Number(av ?? 0);
+        const bn = Number(bv ?? 0);
+        return (an - bn) * direction;
+      }
+
+      const as = String(av ?? "");
+      const bs = String(bv ?? "");
+      return as.localeCompare(bs) * direction;
+    });
+  }
+
   const headCells = fields
     .map((field) => `<th>${escapeHtml(field.label || field.key)}</th>`)
     .join("");
 
-  const rows = records
+  const rows = rowsData
     .map((record, index) => {
       const cells = fields
         .map((field) => {
