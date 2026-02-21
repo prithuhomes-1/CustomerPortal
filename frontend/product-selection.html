@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title></title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script defer src="./assets/vendor/msal-browser.min.js"></script>
+  <script defer src="./config.js"></script>
+  <script defer src="./product-selection.js"></script>
+</head>
+<body id="top">
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand-wrap">
+        <a href="#" id="brand-link" class="logo">
+          <img id="brand-logo" src="" alt="" />
+        </a>
+        <a href="./index.html" aria-label="Go to home page">
+          <img id="app-logo" src="" alt="" class="app-logo" />
+        </a>
+      </div>
+      <div id="nav-links" class="nav-links"></div>
+      <div class="nav-auth">
+        <div id="guest-area" class="inline-row">
+          <a href="#" id="login-btn" class="btn-text"></a>
+          <a href="#" id="signup-btn" class="btn btn-primary"></a>
+        </div>
+        <div id="user-area" class="hidden inline-row">
+          <span id="user-name" class="user-name"></span>
+          <a href="#" id="logout-btn" class="btn-text"></a>
+        </div>
+      </div>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+
+  <main class="product-selection-page">
+    <div class="container">
+      <section class="product-filter-panel">
+        <div class="product-filter-header">
+          <h1 id="ps-title"></h1>
+          <p id="ps-subtitle"></p>
+        </div>
+        <div class="product-filter-grid">
+          <div class="filter-field">
+            <label id="label-category" for="filter-category"></label>
+            <select id="filter-category"></select>
+          </div>
+          <div class="filter-field">
+            <label id="label-space-category" for="filter-space-category"></label>
+            <select id="filter-space-category"></select>
+          </div>
+          <div class="filter-field">
+            <label id="label-product-set" for="filter-product-set"></label>
+            <select id="filter-product-set"></select>
+          </div>
+          <div class="filter-action">
+            <button id="compare-btn" type="button" class="btn btn-primary"></button>
+          </div>
+        </div>
+      </section>
+
+      <div id="ps-status" class="product-status"></div>
+      <section id="ps-cards" class="product-card-grid"></section>
+      <div class="project-panel error hidden" id="error-panel">
+        <pre id="error-view"></pre>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p id="footer-text"></p>
+    </div>
+  </footer>
+</body>
+</html>

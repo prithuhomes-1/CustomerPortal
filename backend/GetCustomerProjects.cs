@@ -107,6 +107,8 @@ public class GetCustomerProjects
             var fourthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_4thEntityKey", "paymentmilestones");
             var fifthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_5thEntityKey", "paymenttransactions");
             var sixthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_6thEntityKey", "projectspaces");
+            var productAccessEntityKey = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessEntityKey", "productaccess");
+            var productSelectionEntityKey = GetEnvironmentVariableOrDefault("Dataverse_ProductSelectionEntityKey", "productselection");
             var requestedEntity = GetQueryParameter(req.Url, "entity");
             var entity = string.IsNullOrWhiteSpace(requestedEntity) ? "projects" : requestedEntity.Trim().ToLowerInvariant();
 
@@ -135,10 +137,18 @@ public class GetCustomerProjects
             {
                 responseJson = await GetSixthTableAsync(contactId, dataverseToken);
             }
+            else if (entity == productAccessEntityKey.ToLowerInvariant())
+            {
+                responseJson = await GetProductAccessAsync(contactId, dataverseToken);
+            }
+            else if (entity == productSelectionEntityKey.ToLowerInvariant())
+            {
+                responseJson = await GetProductSelectionDataAsync(contactId, dataverseToken);
+            }
             else
             {
                 _logger.LogWarning("Unsupported entity requested. Entity: {Entity}, OID: {OID}, ContactId: {ContactId}", entity, oid, contactId);
-                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}, {fifthEntityKey}, {sixthEntityKey}.");
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}, {fifthEntityKey}, {sixthEntityKey}, {productAccessEntityKey}, {productSelectionEntityKey}.");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -561,6 +571,100 @@ public class GetCustomerProjects
         return values.GetRawText();
     }
 
+    private async Task<string> GetProductAccessAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "sgr_projects");
+        var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_sgr_customer_value");
+        var projectAccessField = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessField", "sgr_project");
+        var allowedValue = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessAllowedValue", "1");
+        var escapedContactId = EscapeODataString(contactId);
+        var queryUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectContactLookupField} eq '{escapedContactId}'&$select={projectAccessField}&$top=50";
+
+        var content = await SendDataverseGetAsync(queryUrl, dataverseToken);
+        using var jsonDoc = JsonDocument.Parse(content);
+        var hasAccess = false;
+
+        if (jsonDoc.RootElement.TryGetProperty("value", out var values) && values.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var record in values.EnumerateArray())
+            {
+                if (record.TryGetProperty(projectAccessField, out var valueProp))
+                {
+                    var raw = valueProp.ValueKind switch
+                    {
+                        JsonValueKind.Number => valueProp.GetRawText(),
+                        JsonValueKind.String => valueProp.GetString() ?? string.Empty,
+                        JsonValueKind.True => "true",
+                        JsonValueKind.False => "false",
+                        _ => string.Empty
+                    };
+
+                    if (string.Equals(raw, allowedValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasAccess = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        _logger.LogInformation("Resolved product access. ContactId: {ContactId}, Access: {HasAccess}", contactId, hasAccess);
+        return JsonSerializer.Serialize(new { hasAccess });
+    }
+
+    private async Task<string> GetProductSelectionDataAsync(string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var productSetsTable = GetRequiredEnvironmentVariable("Dataverse_ProductSetsTable");
+        var productSetsProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_ProductSetsProjectLookupField");
+        var productSetsSelectFields = Environment.GetEnvironmentVariable("Dataverse_ProductSetsSelectFields")?.Trim();
+        var productSetsIdField = GetEnvironmentVariableOrDefault("Dataverse_ProductSetsIdField", "sgr_productsetid");
+        var productSetItemsTable = GetRequiredEnvironmentVariable("Dataverse_ProductSetItemsTable");
+        var productSetItemsSetLookupField = GetRequiredEnvironmentVariable("Dataverse_ProductSetItemsProductSetLookupField");
+        var productSetItemsMasterLookupField = GetRequiredEnvironmentVariable("Dataverse_ProductSetItemsProductMasterLookupField");
+        var productSetItemsSelectFields = Environment.GetEnvironmentVariable("Dataverse_ProductSetItemsSelectFields")?.Trim();
+        var productMastersTable = GetRequiredEnvironmentVariable("Dataverse_ProductMastersTable");
+        var productMastersIdField = GetEnvironmentVariableOrDefault("Dataverse_ProductMastersIdField", "sgr_productmasterid");
+        var productMastersSelectFields = Environment.GetEnvironmentVariable("Dataverse_ProductMastersSelectFields")?.Trim();
+
+        var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
+        if (projectIds.Count == 0)
+        {
+            _logger.LogInformation("No projects found for product selection. ContactId: {ContactId}", contactId);
+            return "{\"productSets\":[],\"productSetItems\":[],\"productMasters\":[]}";
+        }
+
+        var productSetFilter = string.Join(" or ", projectIds.Select(id => $"{productSetsProjectLookupField} eq '{EscapeODataString(id)}'"));
+        var productSetsUrl = $"{dataverseUrl}/api/data/v9.2/{productSetsTable}?$filter={productSetFilter}{BuildSelectClause(productSetsSelectFields)}";
+        var productSetsRaw = await GetValueArrayRawAsync(productSetsUrl, dataverseToken, "product sets");
+        var productSetIds = ExtractIdValuesFromRawArray(productSetsRaw, productSetsIdField);
+
+        if (productSetIds.Count == 0)
+        {
+            _logger.LogInformation("No product sets found for projects. ContactId: {ContactId}, ProjectCount: {ProjectCount}", contactId, projectIds.Count);
+            return "{\"productSets\":[],\"productSetItems\":[],\"productMasters\":[]}";
+        }
+
+        var productSetItemsFilter = string.Join(" or ", productSetIds.Select(id => $"{productSetItemsSetLookupField} eq '{EscapeODataString(id)}'"));
+        var productSetItemsUrl = $"{dataverseUrl}/api/data/v9.2/{productSetItemsTable}?$filter={productSetItemsFilter}{BuildSelectClause(productSetItemsSelectFields)}";
+        var productSetItemsRaw = await GetValueArrayRawAsync(productSetItemsUrl, dataverseToken, "product set items");
+        var productMasterIds = ExtractIdValuesFromRawArray(productSetItemsRaw, productSetItemsMasterLookupField);
+
+        if (productMasterIds.Count == 0)
+        {
+            _logger.LogInformation("No product masters linked to product set items. ContactId: {ContactId}, ProductSetCount: {ProductSetCount}", contactId, productSetIds.Count);
+            return $"{{\"productSets\":{productSetsRaw},\"productSetItems\":{productSetItemsRaw},\"productMasters\":[]}}";
+        }
+
+        var mastersFilter = string.Join(" or ", productMasterIds.Select(id => $"{productMastersIdField} eq '{EscapeODataString(id)}'"));
+        var productMastersUrl = $"{dataverseUrl}/api/data/v9.2/{productMastersTable}?$filter={mastersFilter}{BuildSelectClause(productMastersSelectFields)}";
+        var productMastersRaw = await GetValueArrayRawAsync(productMastersUrl, dataverseToken, "product masters");
+
+        _logger.LogInformation("Retrieved product selection payload. ContactId: {ContactId}, ProductSets: {ProductSetCount}, ProductSetItems: {ProductSetItemsCount}, ProductMasters: {ProductMastersCount}", contactId, productSetIds.Count, CountElementsInRawArray(productSetItemsRaw), CountElementsInRawArray(productMastersRaw));
+        return $"{{\"productSets\":{productSetsRaw},\"productSetItems\":{productSetItemsRaw},\"productMasters\":{productMastersRaw}}}";
+    }
+
     private async Task<List<string>> GetThirdIdsForContactAsync(string contactId, string dataverseToken)
     {
         var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
@@ -775,6 +879,51 @@ public class GetCustomerProjects
         }
 
         return content;
+    }
+
+    private async Task<string> GetValueArrayRawAsync(string requestUrl, string dataverseToken, string context)
+    {
+        var content = await SendDataverseGetAsync(requestUrl, dataverseToken);
+        using var jsonDoc = JsonDocument.Parse(content);
+        if (!jsonDoc.RootElement.TryGetProperty("value", out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            _logger.LogWarning("Dataverse payload missing value array while fetching {Context}. Url: {Url}", context, requestUrl);
+            return "[]";
+        }
+
+        return values.GetRawText();
+    }
+
+    private static List<string> ExtractIdValuesFromRawArray(string rawArray, string idField)
+    {
+        using var doc = JsonDocument.Parse(rawArray);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return new List<string>();
+        }
+
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in doc.RootElement.EnumerateArray())
+        {
+            if (!row.TryGetProperty(idField, out var idProp))
+            {
+                continue;
+            }
+
+            var id = idProp.GetString();
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                ids.Add(id);
+            }
+        }
+
+        return ids.ToList();
+    }
+
+    private static int CountElementsInRawArray(string rawArray)
+    {
+        using var doc = JsonDocument.Parse(rawArray);
+        return doc.RootElement.ValueKind == JsonValueKind.Array ? doc.RootElement.GetArrayLength() : 0;
     }
 
     private static async Task<HttpResponseData> CreateJsonErrorResponseAsync(Microsoft.Azure.Functions.Worker.Http.HttpRequestData req, HttpStatusCode statusCode, string message)

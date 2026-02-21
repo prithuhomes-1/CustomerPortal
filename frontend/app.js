@@ -50,6 +50,7 @@ let content = null;
 let msalClient = null;
 let redirectPromise = null;
 let activeDataTab = "projects";
+let hasProductAccess = false;
 const dataCache = {
   projects: null,
   agreements: null,
@@ -98,12 +99,19 @@ function setAuthState(account) {
     ui.userArea.classList.add("hidden");
     ui.userName.textContent = "";
   }
+
+  renderNav();
 }
 
 function renderNav() {
   const links = content.navigation?.links ?? [];
+  const signedIn = !!(msalClient && (msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0]));
   ui.navLinks.innerHTML = "";
   links.forEach((link) => {
+    if (link?.requiresProductAccess && (!signedIn || !hasProductAccess)) {
+      return;
+    }
+
     const a = document.createElement("a");
     a.href = normalizeNavHref(link.href || "#");
     a.textContent = link.label || "";
@@ -195,6 +203,26 @@ function showError(err) {
 function clearError() {
   ui.errorPanel.classList.add("hidden");
   ui.errorView.textContent = "";
+}
+
+async function refreshProductAccessState() {
+  const signedIn = !!(msalClient && (msalClient.getActiveAccount() ?? msalClient.getAllAccounts()[0]));
+  if (!signedIn) {
+    hasProductAccess = false;
+    renderNav();
+    return;
+  }
+
+  const accessEntityKey = text("productSelection.actions.productAccessEntityKey", "productaccess");
+  try {
+    const token = await getAccessToken();
+    const payload = await fetchEntityPayload(accessEntityKey, token);
+    hasProductAccess = payload?.hasAccess === true;
+  } catch {
+    hasProductAccess = false;
+  }
+
+  renderNav();
 }
 
 function getSectionConfig(tabKey) {
@@ -331,6 +359,7 @@ async function login() {
     const response = await msalClient.loginPopup(loginRequest);
     msalClient.setActiveAccount(response.account);
     setAuthState(response.account);
+    await refreshProductAccessState();
   } catch (err) {
     const message = String(err?.message || err || "");
     if (
@@ -364,6 +393,7 @@ async function logout() {
     account,
     mainWindowRedirectUri: config.auth.redirectUri
   });
+  hasProductAccess = false;
   setAuthState(null);
   dataCache.projects = null;
   dataCache.agreements = null;
@@ -615,6 +645,7 @@ async function initializeAuthState() {
   if (response?.account) {
     msalClient.setActiveAccount(response.account);
     setAuthState(response.account);
+    await refreshProductAccessState();
     return;
   }
 
@@ -622,7 +653,9 @@ async function initializeAuthState() {
   if (current) {
     msalClient.setActiveAccount(current);
     setAuthState(current);
+    await refreshProductAccessState();
   } else {
+    hasProductAccess = false;
     setAuthState(null);
   }
 }

@@ -14,6 +14,7 @@
       { "label": "Home", "href": "#top" },
       { "label": "Trainings", "href": "#trainings" },
       { "label": "Projects", "href": "#projects" },
+      { "label": "Product Selection", "href": "./product-selection.html", "requiresProductAccess": true },
       { "label": "Content Data", "href": "./data-view.html" }
     ]
   },
@@ -151,6 +152,44 @@
       "loadingMilestones": "Loading payment milestones...",
       "loadingTransactions": "Loading payment transactions...",
       "loadingProjectSpaces": "Loading project spaces..."
+    }
+  },
+  "productSelection": {
+    "title": "Product Set Selection",
+    "subtitle": "Explore and compare different product sets based on categories and space types to find the best fit for your project needs.",
+    "filters": {
+      "category": "Category",
+      "spaceCategory": "Space Category",
+      "productSet": "Product Set",
+      "compareCta": "Add Set To Compare",
+      "allOption": "All"
+    },
+    "messages": {
+      "loading": "Loading product selection data...",
+      "noData": "No product records available for selected filters.",
+      "notAuthorized": "Product Selection is available only for users with eligible projects."
+    },
+    "actions": {
+      "productAccessEntityKey": "productaccess",
+      "productSelectionEntityKey": "productselection"
+    },
+    "fields": {
+      "productSetId": "sgr_productsetid",
+      "productSetName": "sgr_name",
+      "category": "sgr_category",
+      "spaceCategory": "sgr_spacecategory",
+      "itemProductSetLookup": "_sgr_productset_value",
+      "itemProductMasterLookup": "_sgr_productmaster_value",
+      "masterId": "sgr_productmasterid"
+    },
+    "cards": {
+      "fields": [
+        { "key": "sgr_name", "label": "Product Name" },
+        { "key": "sgr_makebrand", "label": "Make / Brand" },
+        { "key": "sgr_productcode", "label": "Product Code" }
+      ],
+      "imageField": "sgr_imageurl",
+      "imageAlt": "Product image"
     }
   },
   "messages": {
