@@ -75,6 +75,11 @@
         "title": "Payment Milestones",
         "subtitle": "Payment milestones linked to your agreements.",
         "emptyText": "No payment milestone records available."
+      },
+      "transactions": {
+        "title": "Payment Transactions",
+        "subtitle": "Transactions linked to your payment milestones.",
+        "emptyText": "No payment transaction records available."
       }
     },
     "displayFields": {
@@ -100,22 +105,32 @@
         { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
         { "key": "sgr_duedate@OData.Community.Display.V1.FormattedValue", "label": "Due Date" },
         { "key": "sgr_recdon@OData.Community.Display.V1.FormattedValue", "label": "Received On" }
+      ],
+      "transactions": [
+        { "key": "sgr_name", "label": "Transaction Name" },
+        { "key": "sgr_paymenttransactionid", "label": "Transaction ID" },
+        { "key": "sgr_amount@OData.Community.Display.V1.FormattedValue", "label": "Amount" },
+        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
+        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" }
       ]
     },
     "actions": {
       "loadProjects": "Project Details",
       "loadAgreements": "Agreement",
       "loadMilestones": "Payment Milestones",
+      "loadTransactions": "Payment Transactions",
       "agreementsEntityKey": "customeragreements",
-      "milestonesEntityKey": "paymentmilestones"
+      "milestonesEntityKey": "paymentmilestones",
+      "transactionsEntityKey": "paymenttransactions"
     },
     "placeholders": {
       "default": "No project data loaded.",
       "loading": "Loading projects...",
-      "loadingAll": "Loading project details, agreements, and payment milestones...",
+      "loadingAll": "Loading project details, agreements, milestones, and transactions...",
       "loadProjectsFirst": "Click Project Details to load all sections.",
       "loadingAgreements": "Loading customer agreements...",
-      "loadingMilestones": "Loading payment milestones..."
+      "loadingMilestones": "Loading payment milestones...",
+      "loadingTransactions": "Loading payment transactions..."
     }
   },
   "messages": {
