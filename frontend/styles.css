@@ -1,9 +1,11 @@
 :root {
-  --primary: #0069d9;
-  --primary-hover: #0056b3;
+  --primary: #26a69a;
+  --primary-hover: #1f8e84;
+  --accent: #dfc433;
+  --accent-hover: #c9ae24;
   --dark: #1a1a1a;
   --light: #ffffff;
-  --gray: #f4f4f4;
+  --gray: #f8fafb;
   --text-muted: #666;
   --font-main: "Inter", sans-serif;
 }
@@ -35,6 +37,10 @@ body {
   font-weight: 600;
 }
 
+.navbar .user-name {
+  color: #fff;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -44,10 +50,9 @@ body {
   position: fixed;
   top: 0;
   width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: rgba(38, 166, 154, 0.97);
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(14, 74, 69, 0.25);
 }
 
 .nav-container {
@@ -82,14 +87,14 @@ body {
 
 .nav-links a {
   text-decoration: none;
-  color: var(--dark);
+  color: #fff;
   font-weight: 500;
   font-size: 0.95rem;
 }
 
 .nav-links a:hover,
 .btn-text:hover {
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .nav-auth {
@@ -110,18 +115,18 @@ body {
 
 .btn-text {
   text-decoration: none;
-  color: var(--dark);
+  color: #fff;
   font-weight: 600;
   font-size: 0.9rem;
 }
 
 .btn-primary {
-  background: var(--primary);
-  color: white;
+  background: var(--accent);
+  color: #1d1d1d;
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover);
+  background: var(--accent-hover);
 }
 
 .btn-outline {
@@ -322,7 +327,7 @@ body {
 .product-selection-page {
   padding: 7rem 2rem 4rem;
   min-height: calc(100vh - 80px);
-  background: #f5f7fb;
+  background: #fff;
 }
 
 .space-selection-panel {
@@ -336,8 +341,8 @@ body {
 .space-selection-toggle {
   width: 100%;
   border: none;
-  background: #f6f8fc;
-  color: #111827;
+  background: var(--primary);
+  color: #fff;
   padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
@@ -366,7 +371,8 @@ body {
 
 .space-selection-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 980px;
 }
 
@@ -379,8 +385,17 @@ body {
 }
 
 .space-selection-table th {
-  background: #f0f4fb;
+  background: var(--primary);
+  color: #fff;
   font-weight: 700;
+}
+
+.space-selection-table thead th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.space-selection-table thead th:last-child {
+  border-top-right-radius: 12px;
 }
 
 .space-edit-select {
@@ -397,7 +412,7 @@ body {
   min-height: 42px;
   border: none;
   border-radius: 8px;
-  background: #dfc433;
+  background: var(--accent);
   color: #111827;
   font-weight: 700;
   font-size: 0.98rem;
@@ -439,7 +454,7 @@ body {
 }
 
 .product-filter-header {
-  background: #e2c532;
+  background: var(--accent);
   color: #2a2a2a;
   padding: 0.7rem 0.95rem;
 }
@@ -554,7 +569,7 @@ body {
 }
 
 .compare-column-head {
-  background: #f3f7fd;
+  background: #f3fbfa;
   border-bottom: 1px solid #d9e4f2;
   padding: 0.75rem 0.8rem;
 }
@@ -821,7 +836,7 @@ body {
 }
 
 .glass-caption {
-  background: linear-gradient(90deg, rgba(7, 160, 132, 0.93), rgba(17, 150, 187, 0.93));
+  background: var(--primary);
   color: #fff;
   font-weight: 700;
   padding: 0.85rem 1rem;
@@ -829,7 +844,8 @@ body {
 
 .glass-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: rgba(255, 255, 255, 0.74);
 }
 
@@ -841,9 +857,17 @@ body {
 }
 
 .glass-table th {
-  background: rgba(8, 146, 127, 0.9);
+  background: var(--primary);
   color: #fff;
   font-weight: 600;
+}
+
+.glass-table thead th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.glass-table thead th:last-child {
+  border-top-right-radius: 12px;
 }
 
 .glass-table tbody tr:nth-child(even) {
@@ -862,7 +886,7 @@ body {
 }
 
 footer {
-  background: var(--dark);
+  background: var(--primary);
   color: white;
   padding: 2rem;
   text-align: right;
@@ -875,7 +899,8 @@ footer {
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.9rem;
 }
 
@@ -888,7 +913,16 @@ footer {
 }
 
 .data-table th {
-  background: #edf2f8;
+  background: var(--primary);
+  color: #fff;
+}
+
+.data-table thead th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.data-table thead th:last-child {
+  border-top-right-radius: 12px;
 }
 
 @media (max-width: 768px) {
