@@ -615,6 +615,7 @@ function wireEvents() {
   ui.secondaryCta.addEventListener("click", async () => {
     try {
       await loadProjects();
+      document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
     } catch (err) {
       showError(err);
       document.getElementById("projects").scrollIntoView({ behavior: "smooth" });
