@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -37,7 +38,7 @@ public class GetCustomerProjects
     }
 
     [Function("GetCustomerData")]
-    public async Task<HttpResponseData> RunCustomerData([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "customer/data")] Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
+    public async Task<HttpResponseData> RunCustomerData([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "customer/data")] Microsoft.Azure.Functions.Worker.Http.HttpRequestData req)
     {
         return await HandleRequestAsync(req);
     }
@@ -109,11 +110,21 @@ public class GetCustomerProjects
             var sixthEntityKey = GetEnvironmentVariableOrDefault("Dataverse_6thEntityKey", "projectspaces");
             var productAccessEntityKey = GetEnvironmentVariableOrDefault("Dataverse_ProductAccessEntityKey", "productaccess");
             var productSelectionEntityKey = GetEnvironmentVariableOrDefault("Dataverse_ProductSelectionEntityKey", "productselection");
+            var projectSpaceSubmitEntityKey = GetEnvironmentVariableOrDefault("Dataverse_ProjectSpaceSubmitEntityKey", "projectspaceselection");
             var requestedEntity = GetQueryParameter(req.Url, "entity");
             var entity = string.IsNullOrWhiteSpace(requestedEntity) ? "projects" : requestedEntity.Trim().ToLowerInvariant();
+            var method = req.Method?.Trim().ToUpperInvariant() ?? "GET";
 
             string responseJson;
-            if (entity == "projects")
+            if (method == "POST" && entity == projectSpaceSubmitEntityKey.ToLowerInvariant())
+            {
+                responseJson = await UpdateProjectSpaceSelectionAsync(req, contactId, dataverseToken);
+            }
+            else if (method != "GET")
+            {
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.MethodNotAllowed, $"HTTP method '{method}' is not supported for entity '{entity}'.");
+            }
+            else if (entity == "projects")
             {
                 responseJson = await GetProjectsAsync(contactId, dataverseToken);
             }
@@ -148,7 +159,7 @@ public class GetCustomerProjects
             else
             {
                 _logger.LogWarning("Unsupported entity requested. Entity: {Entity}, OID: {OID}, ContactId: {ContactId}", entity, oid, contactId);
-                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}, {fifthEntityKey}, {sixthEntityKey}, {productAccessEntityKey}, {productSelectionEntityKey}.");
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.BadRequest, $"Unsupported entity '{entity}'. Supported entities: projects, {secondaryEntityKey}, {thirdEntityKey}, {fourthEntityKey}, {fifthEntityKey}, {sixthEntityKey}, {productAccessEntityKey}, {productSelectionEntityKey}, {projectSpaceSubmitEntityKey}.");
             }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -659,6 +670,104 @@ public class GetCustomerProjects
 
         _logger.LogInformation("Retrieved product selection payload. ContactId: {ContactId}, ProductSets: {ProductSetCount}, ProductSetItems: {ProductSetItemsCount}, ProductMasters: {ProductMastersCount}", contactId, productSetIds.Count, CountElementsInRawArray(productSetItemsRaw), CountElementsInRawArray(productMastersRaw));
         return $"{{\"productSets\":{productSetsRaw},\"productSetItems\":{productSetItemsRaw},\"productMasters\":{productMastersRaw}}}";
+    }
+
+    private async Task<string> UpdateProjectSpaceSelectionAsync(Microsoft.Azure.Functions.Worker.Http.HttpRequestData req, string contactId, string dataverseToken)
+    {
+        var dataverseUrl = GetRequiredEnvironmentVariable("Dataverse_Url").TrimEnd('/');
+        var projectSpacesTable = GetEnvironmentVariableOrDefault("Dataverse_6thTable", "sgr_projectspaces");
+        var projectSpaceIdField = GetEnvironmentVariableOrDefault("Dataverse_ProjectSpaceIdField", "sgr_projectspaceid");
+        var projectSpaceProjectLookupField = GetEnvironmentVariableOrDefault("Dataverse_6thProjectLookupField", "_sgr_project_value");
+        var customerSelectionField = GetEnvironmentVariableOrDefault("Dataverse_ProjectSpaceCustomerSelectionField", "sgr_customerselection");
+        var productSetLookupBindField = GetEnvironmentVariableOrDefault("Dataverse_ProjectSpaceProductSetLookupBindField", "sgr_productset@odata.bind");
+        var productSetTable = GetEnvironmentVariableOrDefault("Dataverse_ProductSetsTable", "sgr_productsets");
+        var projectsTable = GetEnvironmentVariableOrDefault("Dataverse_ProjectsTable", "sgr_projects");
+        var projectsIdField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsIdField", "sgr_projectid");
+        var projectContactLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectsCustomerLookupField", "_sgr_customer_value");
+
+        using var reader = new StreamReader(req.Body);
+        var requestBody = await reader.ReadToEndAsync();
+        using var bodyDoc = JsonDocument.Parse(requestBody);
+        var root = bodyDoc.RootElement;
+
+        var projectSpaceId = root.TryGetProperty("projectSpaceId", out var psIdProp) ? psIdProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(projectSpaceId))
+        {
+            throw new InvalidOperationException("projectSpaceId is required.");
+        }
+
+        int? customerSelection = null;
+        if (root.TryGetProperty("customerSelection", out var customerSelectionProp))
+        {
+            if (customerSelectionProp.ValueKind == JsonValueKind.Number && customerSelectionProp.TryGetInt32(out var numberValue))
+            {
+                customerSelection = numberValue;
+            }
+            else if (customerSelectionProp.ValueKind == JsonValueKind.String && int.TryParse(customerSelectionProp.GetString(), out var parsedValue))
+            {
+                customerSelection = parsedValue;
+            }
+        }
+
+        if (!customerSelection.HasValue)
+        {
+            throw new InvalidOperationException("customerSelection is required.");
+        }
+
+        var productSetId = root.TryGetProperty("productSetId", out var productSetProp) ? productSetProp.GetString() : null;
+        if (customerSelection.Value != 2)
+        {
+            productSetId = null;
+        }
+
+        // Validate that the project space belongs to one of the contact's projects.
+        var ownershipCheckUrl = $"{dataverseUrl}/api/data/v9.2/{projectSpacesTable}?$filter={projectSpaceIdField} eq '{EscapeODataString(projectSpaceId)}'&$select={projectSpaceProjectLookupField}";
+        var ownershipBody = await SendDataverseGetAsync(ownershipCheckUrl, dataverseToken);
+        using var ownershipDoc = JsonDocument.Parse(ownershipBody);
+        if (!ownershipDoc.RootElement.TryGetProperty("value", out var spaces) || spaces.ValueKind != JsonValueKind.Array || spaces.GetArrayLength() == 0)
+        {
+            throw new InvalidOperationException("Project space not found.");
+        }
+
+        var linkedProjectId = spaces[0].TryGetProperty(projectSpaceProjectLookupField, out var projectProp) ? projectProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(linkedProjectId))
+        {
+            throw new InvalidOperationException("Project space is not linked to a project.");
+        }
+
+        var ownerProjectCheckUrl = $"{dataverseUrl}/api/data/v9.2/{projectsTable}?$filter={projectsIdField} eq '{EscapeODataString(linkedProjectId)}' and {projectContactLookupField} eq '{EscapeODataString(contactId)}'&$select={projectsIdField}";
+        var ownerProjectBody = await SendDataverseGetAsync(ownerProjectCheckUrl, dataverseToken);
+        using var ownerDoc = JsonDocument.Parse(ownerProjectBody);
+        if (!ownerDoc.RootElement.TryGetProperty("value", out var ownerProjects) || ownerProjects.ValueKind != JsonValueKind.Array || ownerProjects.GetArrayLength() == 0)
+        {
+            throw new InvalidOperationException("You are not authorized to update this project space.");
+        }
+
+        var patchPayload = new Dictionary<string, object?>
+        {
+            [customerSelectionField] = customerSelection.Value,
+            [productSetLookupBindField] = productSetId is null ? null : $"/{productSetTable}({productSetId})"
+        };
+
+        var patchUrl = $"{dataverseUrl}/api/data/v9.2/{projectSpacesTable}({projectSpaceId})";
+        using var patchRequest = new HttpRequestMessage(new HttpMethod("PATCH"), patchUrl)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(patchPayload), Encoding.UTF8, "application/json")
+        };
+        patchRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", dataverseToken);
+        patchRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        patchRequest.Headers.Add("OData-Version", "4.0");
+        patchRequest.Headers.Add("OData-MaxVersion", "4.0");
+
+        using var patchResponse = await _httpClient.SendAsync(patchRequest);
+        if (!patchResponse.IsSuccessStatusCode)
+        {
+            var errorBody = await patchResponse.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to update project space selection. Status={(int)patchResponse.StatusCode}. Error={errorBody}");
+        }
+
+        _logger.LogInformation("Project space selection updated. ContactId: {ContactId}, ProjectSpaceId: {ProjectSpaceId}, CustomerSelection: {CustomerSelection}, ProductSetId: {ProductSetId}", contactId, projectSpaceId, customerSelection.Value, productSetId);
+        return JsonSerializer.Serialize(new { success = true });
     }
 
     private async Task<List<string>> GetThirdIdsForContactAsync(string contactId, string dataverseToken)

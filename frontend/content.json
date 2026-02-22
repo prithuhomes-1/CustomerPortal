@@ -182,7 +182,9 @@
     },
     "actions": {
       "productAccessEntityKey": "productaccess",
-      "productSelectionEntityKey": "productselection"
+      "productSelectionEntityKey": "productselection",
+      "projectSpacesEntityKey": "projectspaces",
+      "projectSpaceSubmitEntityKey": "projectspaceselection"
     },
     "fields": {
       "productSetId": "sgr_productsetid",
@@ -201,6 +203,39 @@
       ],
       "imageFields": ["sgr_productimage", "sgr_productimage2", "sgr_productimage3"],
       "imageAlt": "Product image"
+    },
+    "spaceSelection": {
+      "title": "Choose Your Selections",
+      "columns": {
+        "space": "Space",
+        "spaceType": "Space Type",
+        "spaceCategory": "Space Category",
+        "dueDate": "Selection Due Date",
+        "customerSelection": "Selection Choice",
+        "productSet": "Select Product Set",
+        "actions": "Actions",
+        "submit": "Submit"
+      },
+      "customerSelectionOptions": [
+        { "value": "1", "label": "NA" },
+        { "value": "2", "label": "Product Set" },
+        { "value": "3", "label": "DIY (Do it Yourself)" }
+      ],
+      "messages": {
+        "saved": "Selection saved.",
+        "saveFailed": "Failed to save selection.",
+        "noSpaces": "No project spaces available."
+      },
+      "fields": {
+        "id": "sgr_projectspaceid",
+        "spaceName": "sgr_name",
+        "spaceType": "sgr_spacetype",
+        "spaceCategory": "sgr_spacecategory",
+        "dueDateRaw": "sgr_duedate",
+        "dueDateFormatted": "sgr_duedate@OData.Community.Display.V1.FormattedValue",
+        "customerSelection": "sgr_customerselection",
+        "productSetLookup": "_sgr_productset_value"
+      }
     }
   },
   "messages": {

@@ -40,6 +40,31 @@
 
   <main class="product-selection-page">
     <div class="container">
+      <section class="space-selection-panel">
+        <button id="space-selection-toggle" class="space-selection-toggle" type="button" aria-expanded="true">
+          <span id="space-selection-title"></span>
+          <span id="space-selection-arrow" class="space-selection-arrow">&#9662;</span>
+        </button>
+        <div id="space-selection-body" class="space-selection-body">
+          <div class="space-selection-table-wrap">
+            <table class="space-selection-table">
+              <thead>
+                <tr>
+                  <th id="ss-col-space"></th>
+                  <th id="ss-col-space-type"></th>
+                  <th id="ss-col-space-category"></th>
+                  <th id="ss-col-due-date"></th>
+                  <th id="ss-col-customer-selection"></th>
+                  <th id="ss-col-product-set"></th>
+                  <th id="ss-col-actions"></th>
+                </tr>
+              </thead>
+              <tbody id="space-selection-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="product-filter-panel">
         <div class="product-filter-header">
           <h1 id="ps-title"></h1>
