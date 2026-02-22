@@ -175,12 +175,18 @@ body {
 .btn-pill::after {
   content: "✦";
   position: absolute;
-  left: 18px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #b48a00;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
+  text-align: center;
 }
 
 .btn-pill[data-icon="help"]::after {
@@ -256,7 +262,7 @@ body {
 .hero-welcome-badge {
   display: inline-flex;
   align-items: center;
-  align-self: flex-end;
+  align-self: center;
   padding: 0.2rem 0.85rem;
   border-radius: 999px;
   background: linear-gradient(90deg, #f2d65d 0%, #dfc433 100%);
