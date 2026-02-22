@@ -90,11 +90,14 @@ body {
   color: #fff;
   font-weight: 500;
   font-size: 0.95rem;
+  transition: color 0.18s ease, font-weight 0.18s ease, text-shadow 0.18s ease;
 }
 
 .nav-links a:hover,
 .btn-text:hover {
   color: var(--accent);
+  font-weight: 700;
+  text-shadow: 0 0 0.01px var(--accent);
 }
 
 .nav-auth {
@@ -341,8 +344,8 @@ body {
 .space-selection-toggle {
   width: 100%;
   border: none;
-  background: var(--primary);
-  color: #fff;
+  background: var(--accent);
+  color: #1f2937;
   padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
