@@ -41,8 +41,8 @@
     "defaultUserName": "Customer"
   },
   "hero": {
-    "title": "Welcome to Prithu Homes – Crafting Your Dream, Brick by Brick",
-    "subtitle": "Securely access your projects, milestones, and transactions in one place.",
+    "title": "Crafting Your Dream, Brick by Brick",
+    "subtitle": "Welcome to Prithu Homes",
     "primaryCta": "Explore Trainings",
     "secondaryCta": "Project Details",
     "videoUrl": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
