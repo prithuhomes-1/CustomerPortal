@@ -263,16 +263,25 @@ body {
 }
 
 .projects-section .section-header {
-  display: grid;
-  justify-items: center;
-  gap: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .projects-home-image {
   width: 190px;
   max-width: 42vw;
   height: auto;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
+}
+
+.projects-title-block {
+  text-align: left;
+}
+
+.projects-title-block h2 {
+  margin-bottom: 0.2rem;
 }
 
 .feature-grid {
@@ -996,6 +1005,16 @@ footer {
 
   .hero-content h1 {
     font-size: 2.2rem;
+  }
+
+  .projects-section .section-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .projects-title-block {
+    text-align: center;
   }
 
   .cta-buttons {

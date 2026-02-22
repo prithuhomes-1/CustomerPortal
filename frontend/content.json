@@ -76,33 +76,33 @@
   },
   "projects": {
     "title": "My Sweet Home",
-    "subtitle": "Key Details of Your Sweet Home",
+    "subtitle": "Project Details : Key Details of Your Sweet Home",
     "homeImageUrl": "./assets/images/MySweetHome.png",
     "homeImageAlt": "My Sweet Home",
     "sections": {
       "projects": {
         "title": "Project Details",
-        "subtitle": "Key Details of Your Sweet Home",
+        "subtitle": "Project Details : Key Details of Your Sweet Home",
         "emptyText": "No project records available."
       },
       "agreements": {
         "title": "Agreement",
-        "subtitle": "Customer agreements linked to your projects.",
+        "subtitle": "Agreement : Our Agreement details at a glance.",
         "emptyText": "No agreement records available."
       },
       "milestones": {
         "title": "Payment Milestones",
-        "subtitle": "Payment milestones linked to your agreements.",
+        "subtitle": "Payment Milestones : Payment milestones linked to your agreement.",
         "emptyText": "No payment milestone records available."
       },
       "transactions": {
         "title": "Payment Transactions",
-        "subtitle": "Transactions linked to your payment milestones.",
+        "subtitle": "Payment Transaction : Transactions linked to your payment milestones.",
         "emptyText": "No payment transaction records available."
       },
       "projectspaces": {
         "title": "Project Spaces",
-        "subtitle": "Project spaces linked directly to your projects.",
+        "subtitle": "Project Spaces : Project spaces linked directly to your project.",
         "emptyText": "No project space records available."
       }
     },
