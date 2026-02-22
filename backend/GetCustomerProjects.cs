@@ -560,6 +560,8 @@ public class GetCustomerProjects
         var sixthTable = GetRequiredEnvironmentVariable("Dataverse_6thTable");
         var sixthProjectLookupField = GetRequiredEnvironmentVariable("Dataverse_6thProjectLookupField");
         var sixthSelectFields = Environment.GetEnvironmentVariable("Dataverse_6thSelectFields")?.Trim();
+        var projectSpaceProductSetLookupField = GetEnvironmentVariableOrDefault("Dataverse_ProjectSpaceProductSetLookupField", "_sgr_productset_value");
+        sixthSelectFields = EnsureSelectIncludesField(sixthSelectFields, projectSpaceProductSetLookupField);
 
         var projectIds = await GetProjectIdsForContactAsync(contactId, dataverseToken);
         if (projectIds.Count == 0)
@@ -902,6 +904,31 @@ public class GetCustomerProjects
     private static string BuildSelectClause(string? selectFields)
     {
         return string.IsNullOrWhiteSpace(selectFields) ? string.Empty : $"&$select={selectFields}";
+    }
+
+    private static string EnsureSelectIncludesField(string? selectFields, string requiredField)
+    {
+        if (string.IsNullOrWhiteSpace(requiredField))
+        {
+            return selectFields ?? string.Empty;
+        }
+
+        if (string.IsNullOrWhiteSpace(selectFields))
+        {
+            return requiredField;
+        }
+
+        var fields = selectFields
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        if (fields.Any(f => string.Equals(f, requiredField, StringComparison.OrdinalIgnoreCase)))
+        {
+            return string.Join(",", fields);
+        }
+
+        fields.Add(requiredField);
+        return string.Join(",", fields);
     }
 
     private static string BuildSelectQueryWithoutFilter(string? selectFields)
