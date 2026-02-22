@@ -26,7 +26,12 @@ const ui = {
   categorySelect: document.getElementById("filter-category"),
   spaceCategorySelect: document.getElementById("filter-space-category"),
   productSetSelect: document.getElementById("filter-product-set"),
-  compareBtn: document.getElementById("compare-btn"),
+  addCompareBtn: document.getElementById("add-compare-btn"),
+  runCompareBtn: document.getElementById("run-compare-btn"),
+  clearCompareBtn: document.getElementById("clear-compare-btn"),
+  selectedSetsLabel: document.getElementById("selected-sets-label"),
+  selectedSetsChips: document.getElementById("selected-sets-chips"),
+  compareResults: document.getElementById("compare-results"),
   status: document.getElementById("ps-status"),
   cards: document.getElementById("ps-cards"),
   errorPanel: document.getElementById("error-panel"),
@@ -42,6 +47,10 @@ const dataState = {
   productSets: [],
   productSetItems: [],
   productMasters: []
+};
+const compareState = {
+  selectedSetIds: [],
+  maxSets: 3
 };
 
 function text(path, fallback = "") {
@@ -180,20 +189,6 @@ function getFormattedChoice(record, logicalName) {
   return record?.[formattedKey] ?? record?.[logicalName] ?? "";
 }
 
-function getDistinctOptions(rows, valueKey, labelResolver) {
-  const map = new Map();
-  rows.forEach((row) => {
-    const value = String(getFieldValue(row, valueKey) ?? "");
-    if (!value) {
-      return;
-    }
-    if (!map.has(value)) {
-      map.set(value, String(labelResolver(row) || value));
-    }
-  });
-  return [...map.entries()].map(([value, label]) => ({ value, label }));
-}
-
 function getFieldValue(record, logicalName) {
   if (!record || !logicalName) {
     return "";
@@ -225,6 +220,20 @@ function getDisplayFieldValue(record, fieldKey) {
 
   const raw = record[fieldKey];
   return raw === null || raw === undefined || raw === "" ? "-" : raw;
+}
+
+function getDistinctOptions(rows, valueKey, labelResolver) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const value = String(getFieldValue(row, valueKey) ?? "");
+    if (!value) {
+      return;
+    }
+    if (!map.has(value)) {
+      map.set(value, String(labelResolver(row) || value));
+    }
+  });
+  return [...map.entries()].map(([value, label]) => ({ value, label }));
 }
 
 function normalizeImageUrls(card) {
@@ -314,6 +323,122 @@ function applyFilters() {
   renderCards();
 }
 
+function getSetNameById(setId) {
+  const productSetIdField = getFieldName("productSelection.fields.productSetId", "sgr_productsetid");
+  const productSetNameField = getFieldName("productSelection.fields.productSetName", "sgr_name");
+  const row = dataState.productSets.find((x) => String(x?.[productSetIdField] ?? "") === String(setId));
+  return row?.[productSetNameField] ?? setId;
+}
+
+function getSetRecordById(setId) {
+  const productSetIdField = getFieldName("productSelection.fields.productSetId", "sgr_productsetid");
+  return dataState.productSets.find((x) => String(x?.[productSetIdField] ?? "") === String(setId)) ?? null;
+}
+
+function getProductsForSet(setId) {
+  const itemSetLookup = getFieldName("productSelection.fields.itemProductSetLookup", "_sgr_productset_value");
+  const itemMasterLookup = getFieldName("productSelection.fields.itemProductMasterLookup", "_sgr_product_value");
+  const masterIdField = getFieldName("productSelection.fields.masterId", "sgr_productmasterid");
+  const mastersById = new Map(dataState.productMasters.map((row) => [String(row?.[masterIdField] ?? ""), row]));
+
+  return dataState.productSetItems
+    .filter((row) => String(row?.[itemSetLookup] ?? "") === String(setId))
+    .map((item) => mastersById.get(String(item?.[itemMasterLookup] ?? "")))
+    .filter(Boolean);
+}
+
+function renderCompareChips() {
+  const label = text("productSelection.compare.selectedCount", "{count} model sets selected (max {max})")
+    .replace("{count}", String(compareState.selectedSetIds.length))
+    .replace("{max}", String(compareState.maxSets));
+  ui.selectedSetsLabel.textContent = label;
+
+  ui.selectedSetsChips.innerHTML = compareState.selectedSetIds.map((setId) => {
+    const name = getSetNameById(setId);
+    return `<button class="compare-chip" type="button" data-set-id="${escapeHtml(setId)}">${escapeHtml(name)} <span aria-hidden="true">x</span></button>`;
+  }).join("");
+}
+
+function addCurrentSetToCompare() {
+  const setId = ui.productSetSelect.value;
+  if (!setId) {
+    ui.status.textContent = text("productSelection.messages.pickSetFirst", "Select a Product Set first.");
+    return;
+  }
+
+  if (compareState.selectedSetIds.includes(setId)) {
+    ui.status.textContent = text("productSelection.messages.alreadyAdded", "This Product Set is already added for comparison.");
+    return;
+  }
+
+  if (compareState.selectedSetIds.length >= compareState.maxSets) {
+    ui.status.textContent = text("productSelection.messages.maxReached", "Maximum compare limit reached.");
+    return;
+  }
+
+  compareState.selectedSetIds.push(setId);
+  renderCompareChips();
+  ui.status.textContent = text("productSelection.messages.added", "Product Set added for comparison.");
+}
+
+function clearCompareSelection() {
+  compareState.selectedSetIds = [];
+  ui.compareResults.innerHTML = "";
+  ui.compareResults.classList.add("hidden");
+  renderCompareChips();
+}
+
+function renderCompareResults() {
+  if (compareState.selectedSetIds.length === 0) {
+    ui.status.textContent = text("productSelection.messages.comparePick", "Add at least one Product Set to compare.");
+    return;
+  }
+
+  const productSetNameField = getFieldName("productSelection.fields.productSetName", "sgr_name");
+  const categoryField = getFieldName("productSelection.fields.category", "sgr_category");
+  const spaceCategoryField = getFieldName("productSelection.fields.spaceCategory", "sgr_spacecategory");
+  const imageAlt = text("productSelection.cards.imageAlt", "Product image");
+
+  const columnsHtml = compareState.selectedSetIds.map((setId) => {
+    const setRecord = getSetRecordById(setId);
+    const products = getProductsForSet(setId);
+    const productRows = products.map((product) => {
+      const img = normalizeImageUrls(product)[0] ?? "";
+      const name = getDisplayFieldValue(product, "sgr_name");
+      const make = getDisplayFieldValue(product, "_sgr_make_value@OData.Community.Display.V1.FormattedValue");
+      const code = getDisplayFieldValue(product, "sgr_productcode");
+
+      return `
+        <article class="compare-product-card">
+          <div class="compare-product-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(imageAlt)}" />` : ""}</div>
+          <div class="compare-product-meta">
+            <strong>${escapeHtml(name)}</strong>
+            <span>Brand: ${escapeHtml(make)}</span>
+            <span>Code: ${escapeHtml(code)}</span>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    return `
+      <section class="compare-column">
+        <header class="compare-column-head">
+          <h3>${escapeHtml(setRecord?.[productSetNameField] ?? setId)}</h3>
+          <p>Category: ${escapeHtml(getDisplayFieldValue(setRecord, categoryField))}</p>
+          <p>Space: ${escapeHtml(getDisplayFieldValue(setRecord, spaceCategoryField))}</p>
+        </header>
+        <div class="compare-column-body">${productRows}</div>
+      </section>
+    `;
+  }).join("");
+
+  ui.compareResults.innerHTML = `
+    <div class="compare-results-title">${escapeHtml(text("productSelection.compare.resultsTitle", "Model Set Comparison"))}</div>
+    <div class="compare-grid">${columnsHtml}</div>
+  `;
+  ui.compareResults.classList.remove("hidden");
+}
+
 function renderCards() {
   const selectedSetId = ui.productSetSelect.value;
   const itemSetLookup = getFieldName("productSelection.fields.itemProductSetLookup", "_sgr_productset_value");
@@ -325,9 +450,7 @@ function renderCards() {
   const candidateItems = selectedSetId
     ? dataState.productSetItems.filter((row) => String(row?.[itemSetLookup] ?? "") === selectedSetId)
     : [];
-  const mastersById = new Map(
-    dataState.productMasters.map((row) => [String(row?.[masterIdField] ?? ""), row])
-  );
+  const mastersById = new Map(dataState.productMasters.map((row) => [String(row?.[masterIdField] ?? ""), row]));
   const cards = candidateItems
     .map((item) => mastersById.get(String(item?.[itemMasterLookup] ?? "")))
     .filter(Boolean);
@@ -349,10 +472,9 @@ function renderCards() {
 
     const hasCarousel = images.length > 1;
     const dots = images.map((_, idx) => `<span class="product-card-dot${idx === 0 ? " active" : ""}"></span>`).join("");
-    const sideClass = "zoom-right";
 
     return `
-      <article class="product-card ${sideClass}" data-image-index="0" data-images='${escapeHtml(JSON.stringify(images))}'>
+      <article class="product-card zoom-right" data-image-index="0" data-images='${escapeHtml(JSON.stringify(images))}'>
         <div class="product-card-image-wrap">
           <div class="product-card-image">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(imageAlt)}" />` : ""}</div>
           <div class="product-card-zoom">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(imageAlt)}" />` : ""}</div>
@@ -412,6 +534,7 @@ async function loadSelectionData() {
   dataState.productSets = Array.isArray(payload?.productSets) ? payload.productSets : [];
   dataState.productSetItems = Array.isArray(payload?.productSetItems) ? payload.productSetItems : [];
   dataState.productMasters = Array.isArray(payload?.productMasters) ? payload.productMasters : [];
+  clearCompareSelection();
   applyFilters();
 }
 
@@ -442,6 +565,7 @@ async function logout() {
   setAuthState(null);
   ui.status.textContent = text("messages.noSignedInAccount", "Please sign in first.");
   ui.cards.innerHTML = "";
+  clearCompareSelection();
 }
 
 function applyStaticContent() {
@@ -459,9 +583,12 @@ function applyStaticContent() {
   ui.categoryLabel.textContent = text("productSelection.filters.category", "Category");
   ui.spaceCategoryLabel.textContent = text("productSelection.filters.spaceCategory", "Space Category");
   ui.productSetLabel.textContent = text("productSelection.filters.productSet", "Product Set");
-  ui.compareBtn.textContent = text("productSelection.filters.compareCta", "Add Set To Compare");
+  ui.addCompareBtn.textContent = text("productSelection.filters.compareCta", "Add Set To Compare");
+  ui.runCompareBtn.textContent = text("productSelection.compare.runButton", "Compare");
+  ui.clearCompareBtn.textContent = text("productSelection.compare.clearButton", "Clear");
   ui.footerText.textContent = text("footer.text", "");
   ui.status.textContent = text("messages.noSignedInAccount", "Please sign in first.");
+  renderCompareChips();
 }
 
 function wireEvents() {
@@ -472,7 +599,30 @@ function wireEvents() {
   ui.categorySelect.addEventListener("change", applyFilters);
   ui.spaceCategorySelect.addEventListener("change", applyFilters);
   ui.productSetSelect.addEventListener("change", renderCards);
-  ui.compareBtn.addEventListener("click", renderCards);
+  ui.addCompareBtn.addEventListener("click", addCurrentSetToCompare);
+  ui.runCompareBtn.addEventListener("click", renderCompareResults);
+  ui.clearCompareBtn.addEventListener("click", clearCompareSelection);
+
+  ui.selectedSetsChips.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    const chip = target.closest(".compare-chip");
+    if (!(chip instanceof HTMLElement)) {
+      return;
+    }
+
+    const setId = chip.getAttribute("data-set-id");
+    if (!setId) {
+      return;
+    }
+
+    compareState.selectedSetIds = compareState.selectedSetIds.filter((x) => x !== setId);
+    renderCompareChips();
+  });
+
   ui.cards.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {

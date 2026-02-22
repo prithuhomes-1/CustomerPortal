@@ -383,6 +383,122 @@ body {
   font-weight: 600;
 }
 
+.compare-toolbar {
+  margin-top: 1rem;
+  border-top: 1px solid #dbe2ec;
+  padding-top: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+}
+
+.compare-count {
+  font-weight: 600;
+  color: #1f2a37;
+}
+
+.compare-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.compare-chip {
+  border: 1px solid #a7bbd7;
+  border-radius: 999px;
+  padding: 0.28rem 0.66rem;
+  font-size: 0.82rem;
+  background: #eef5ff;
+  color: #21324b;
+  cursor: pointer;
+}
+
+.compare-chip span {
+  opacity: 0.75;
+}
+
+.compare-toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.compare-results {
+  margin-top: 1rem;
+  border-top: 1px solid #dbe2ec;
+  padding-top: 0.9rem;
+}
+
+.compare-results-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.9rem;
+}
+
+.compare-column {
+  border: 1px solid #d9e4f2;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.compare-column-head {
+  background: #f3f7fd;
+  border-bottom: 1px solid #d9e4f2;
+  padding: 0.75rem 0.8rem;
+}
+
+.compare-column-head h3 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.compare-column-head p {
+  font-size: 0.82rem;
+  color: #48596f;
+}
+
+.compare-column-body {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.compare-product-card {
+  border: 1px solid #95dfc8;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0.55rem;
+  padding: 0.5rem;
+}
+
+.compare-product-media {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f0f3f8;
+}
+
+.compare-product-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.compare-product-meta {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+}
+
 .product-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -763,5 +879,9 @@ footer {
 
   .product-card-zoom {
     display: none;
+  }
+
+  .compare-toolbar-actions {
+    justify-content: flex-start;
   }
 }

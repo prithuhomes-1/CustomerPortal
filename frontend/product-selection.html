@@ -59,13 +59,22 @@
             <select id="filter-product-set"></select>
           </div>
           <div class="filter-action">
-            <button id="compare-btn" type="button" class="btn btn-primary"></button>
+            <button id="add-compare-btn" type="button" class="btn btn-primary"></button>
           </div>
         </div>
       </section>
 
       <div id="ps-status" class="product-status"></div>
       <section id="ps-cards" class="product-card-grid"></section>
+      <section class="compare-toolbar">
+        <div id="selected-sets-label" class="compare-count"></div>
+        <div id="selected-sets-chips" class="compare-chips"></div>
+        <div class="compare-toolbar-actions">
+          <button id="clear-compare-btn" type="button" class="btn btn-outline"></button>
+          <button id="run-compare-btn" type="button" class="btn btn-primary"></button>
+        </div>
+      </section>
+      <section id="compare-results" class="compare-results hidden"></section>
       <div class="project-panel error hidden" id="error-panel">
         <pre id="error-view"></pre>
       </div>

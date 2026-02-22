@@ -164,10 +164,21 @@
       "compareCta": "Add Set To Compare",
       "allOption": "All"
     },
+    "compare": {
+      "runButton": "Compare",
+      "clearButton": "Clear",
+      "selectedCount": "{count} model sets selected (max {max})",
+      "resultsTitle": "Model Set Comparison"
+    },
     "messages": {
       "loading": "Loading product selection data...",
       "noData": "No product records available for selected filters.",
-      "notAuthorized": "Product Selection is available only for users with eligible projects."
+      "notAuthorized": "Product Selection is available only for users with eligible projects.",
+      "pickSetFirst": "Select a Product Set first.",
+      "alreadyAdded": "This Product Set is already added for comparison.",
+      "maxReached": "Maximum compare limit reached.",
+      "added": "Product Set added for comparison.",
+      "comparePick": "Add at least one Product Set to compare."
     },
     "actions": {
       "productAccessEntityKey": "productaccess",
