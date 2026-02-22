@@ -473,8 +473,8 @@ body {
 .product-card-zoom {
   position: absolute;
   top: 0;
-  width: 340px;
-  height: 220px;
+  width: 460px;
+  height: 300px;
   border-radius: 12px;
   border: 1px solid #b9ead8;
   background: #fff;
