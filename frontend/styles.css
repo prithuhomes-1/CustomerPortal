@@ -408,6 +408,11 @@ body {
   cursor: not-allowed;
 }
 
+.space-submit-btn[data-busy="1"] {
+  opacity: 0.8;
+  cursor: progress;
+}
+
 .space-empty {
   color: #6b7280;
 }

@@ -11,11 +11,27 @@
   },
   "navigation": {
     "links": [
-      { "label": "Home", "href": "#top" },
-      { "label": "Trainings", "href": "#trainings" },
-      { "label": "Projects", "href": "#projects" },
-      { "label": "Product Selection", "href": "./product-selection.html", "requiresProductAccess": true },
-      { "label": "Content Data", "href": "./data-view.html" }
+      {
+        "label": "Home",
+        "href": "#top"
+      },
+      {
+        "label": "Trainings",
+        "href": "#trainings"
+      },
+      {
+        "label": "Projects",
+        "href": "#projects"
+      },
+      {
+        "label": "Product Selection",
+        "href": "./product-selection.html",
+        "requiresProductAccess": true
+      },
+      {
+        "label": "Content Data",
+        "href": "./data-view.html"
+      }
     ]
   },
   "auth": {
@@ -90,39 +106,114 @@
     },
     "displayFields": {
       "projects": [
-        { "key": "sgr_name", "label": "Project Name" },
-        { "key": "sgr_projectid", "label": "Project ID" },
-        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" },
-        { "key": "modifiedon@OData.Community.Display.V1.FormattedValue", "label": "Modified On" },
-        { "key": "statecode@OData.Community.Display.V1.FormattedValue", "label": "State" }
+        {
+          "key": "sgr_name",
+          "label": "Project Name"
+        },
+        {
+          "key": "sgr_projectid",
+          "label": "Project ID"
+        },
+        {
+          "key": "createdon@OData.Community.Display.V1.FormattedValue",
+          "label": "Created On"
+        },
+        {
+          "key": "modifiedon@OData.Community.Display.V1.FormattedValue",
+          "label": "Modified On"
+        },
+        {
+          "key": "statecode@OData.Community.Display.V1.FormattedValue",
+          "label": "State"
+        }
       ],
       "agreements": [
-        { "key": "sgr_name", "label": "Agreement Name" },
-        { "key": "sgr_customeragreementid", "label": "Agreement ID" },
-        { "key": "sgr_totalvalue@OData.Community.Display.V1.FormattedValue", "label": "Total Value" },
-        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
-        { "key": "createdon@OData.Community.Display.V1.FormattedValue", "label": "Created On" }
+        {
+          "key": "sgr_name",
+          "label": "Agreement Name"
+        },
+        {
+          "key": "sgr_customeragreementid",
+          "label": "Agreement ID"
+        },
+        {
+          "key": "sgr_totalvalue@OData.Community.Display.V1.FormattedValue",
+          "label": "Total Value"
+        },
+        {
+          "key": "sgr_stage@OData.Community.Display.V1.FormattedValue",
+          "label": "Stage"
+        },
+        {
+          "key": "createdon@OData.Community.Display.V1.FormattedValue",
+          "label": "Created On"
+        }
       ],
       "milestones": [
-        { "key": "sgr_name", "label": "Milestone Name" },
-        { "key": "sgr_sequence", "label": "Sequence" },
-        { "key": "sgr_amount@OData.Community.Display.V1.FormattedValue", "label": "Amount" },
-        { "key": "sgr_recdamount@OData.Community.Display.V1.FormattedValue", "label": "Received Amount" },
-        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Stage" },
-        { "key": "sgr_duedate@OData.Community.Display.V1.FormattedValue", "label": "Due Date" },
-        { "key": "sgr_recdon@OData.Community.Display.V1.FormattedValue", "label": "Received On" }
+        {
+          "key": "sgr_name",
+          "label": "Milestone Name"
+        },
+        {
+          "key": "sgr_sequence",
+          "label": "Sequence"
+        },
+        {
+          "key": "sgr_amount@OData.Community.Display.V1.FormattedValue",
+          "label": "Amount"
+        },
+        {
+          "key": "sgr_recdamount@OData.Community.Display.V1.FormattedValue",
+          "label": "Received Amount"
+        },
+        {
+          "key": "sgr_stage@OData.Community.Display.V1.FormattedValue",
+          "label": "Stage"
+        },
+        {
+          "key": "sgr_duedate@OData.Community.Display.V1.FormattedValue",
+          "label": "Due Date"
+        },
+        {
+          "key": "sgr_recdon@OData.Community.Display.V1.FormattedValue",
+          "label": "Received On"
+        }
       ],
       "transactions": [
-        { "key": "sgr_paymentdate@OData.Community.Display.V1.FormattedValue", "label": "Payment Date" },
-        { "key": "_sgr_paymentmilestone_value@OData.Community.Display.V1.FormattedValue", "label": "Payment Milestone" },
-        { "key": "sgr_paymentamount@OData.Community.Display.V1.FormattedValue", "label": "Amount Paid" },
-        { "key": "sgr_stage@OData.Community.Display.V1.FormattedValue", "label": "Transaction Status" },
-        { "key": "sgr_proof", "label": "Proof" }
+        {
+          "key": "sgr_paymentdate@OData.Community.Display.V1.FormattedValue",
+          "label": "Payment Date"
+        },
+        {
+          "key": "_sgr_paymentmilestone_value@OData.Community.Display.V1.FormattedValue",
+          "label": "Payment Milestone"
+        },
+        {
+          "key": "sgr_paymentamount@OData.Community.Display.V1.FormattedValue",
+          "label": "Amount Paid"
+        },
+        {
+          "key": "sgr_stage@OData.Community.Display.V1.FormattedValue",
+          "label": "Transaction Status"
+        },
+        {
+          "key": "sgr_proof",
+          "label": "Proof"
+        }
       ],
       "projectspaces": [
-        { "key": "sgr_name", "label": "Space Name" },
-        { "key": "sgr_spacetype@OData.Community.Display.V1.FormattedValue", "label": "Space Type" },
-        { "key": "sgr_spacecategory@OData.Community.Display.V1.FormattedValue", "label": "Space Category" }
+        {
+          "key": "sgr_name",
+          "label": "Space Name"
+        },
+        {
+          "key": "sgr_spacetype@OData.Community.Display.V1.FormattedValue",
+          "label": "Space Type"
+        },
+        {
+          "key": "sgr_spacecategory@OData.Community.Display.V1.FormattedValue",
+          "label": "Space Category"
+        }
       ]
     },
     "sort": {
@@ -197,11 +288,24 @@
     },
     "cards": {
       "fields": [
-        { "key": "sgr_name", "label": "Product Name" },
-        { "key": "_sgr_make_value@OData.Community.Display.V1.FormattedValue", "label": "Make / Brand" },
-        { "key": "sgr_productcode", "label": "Product Code" }
+        {
+          "key": "sgr_name",
+          "label": "Product Name"
+        },
+        {
+          "key": "_sgr_make_value@OData.Community.Display.V1.FormattedValue",
+          "label": "Make / Brand"
+        },
+        {
+          "key": "sgr_productcode",
+          "label": "Product Code"
+        }
       ],
-      "imageFields": ["sgr_productimage", "sgr_productimage2", "sgr_productimage3"],
+      "imageFields": [
+        "sgr_productimage",
+        "sgr_productimage2",
+        "sgr_productimage3"
+      ],
       "imageAlt": "Product image"
     },
     "spaceSelection": {
@@ -214,17 +318,28 @@
         "customerSelection": "Selection Choice",
         "productSet": "Select Product Set",
         "actions": "Actions",
-        "submit": "Submit"
+        "submit": "Submit",
+        "saving": "Saving..."
       },
       "customerSelectionOptions": [
-        { "value": "1", "label": "NA" },
-        { "value": "2", "label": "Product Set" },
-        { "value": "3", "label": "DIY (Do it Yourself)" }
+        {
+          "value": "1",
+          "label": "NA"
+        },
+        {
+          "value": "2",
+          "label": "Product Set"
+        },
+        {
+          "value": "3",
+          "label": "DIY (Do it Yourself)"
+        }
       ],
       "messages": {
         "saved": "Selection saved.",
         "saveFailed": "Failed to save selection.",
-        "noSpaces": "No project spaces available."
+        "noSpaces": "No project spaces available.",
+        "saving": "Saving selection..."
       },
       "fields": {
         "id": "sgr_projectspaceid",
@@ -261,4 +376,3 @@
     }
   }
 }
-
