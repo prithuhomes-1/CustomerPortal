@@ -262,6 +262,19 @@ body {
   color: var(--text-muted);
 }
 
+.projects-section .section-header {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+}
+
+.projects-home-image {
+  width: 190px;
+  max-width: 42vw;
+  height: auto;
+  margin-bottom: 0.25rem;
+}
+
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

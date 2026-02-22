@@ -75,12 +75,14 @@
     ]
   },
   "projects": {
-    "title": "My Projects",
-    "subtitle": "Your API response appears below after authentication.",
+    "title": "My Sweet Home",
+    "subtitle": "Key Details of Your Sweet Home",
+    "homeImageUrl": "./assets/images/MySweetHome.png",
+    "homeImageAlt": "My Sweet Home",
     "sections": {
       "projects": {
         "title": "Project Details",
-        "subtitle": "Customer projects linked to your profile.",
+        "subtitle": "Key Details of Your Sweet Home",
         "emptyText": "No project records available."
       },
       "agreements": {

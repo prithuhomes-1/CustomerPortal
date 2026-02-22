@@ -30,6 +30,7 @@ const ui = {
   featureGrid: document.getElementById("feature-grid"),
   projectsTitle: document.getElementById("projects-title"),
   projectsSubtitle: document.getElementById("projects-subtitle"),
+  projectsHomeImage: document.getElementById("projects-home-image"),
   loadProjectsBtn: document.getElementById("load-projects-btn"),
   loadAgreementsBtn: document.getElementById("load-agreements-btn"),
   loadMilestonesBtn: document.getElementById("load-milestones-btn"),
@@ -165,6 +166,8 @@ function applyContent() {
   ui.featuresSubtitle.textContent = text("features.subtitle", "");
   ui.projectsTitle.textContent = text("projects.title", "Projects");
   ui.projectsSubtitle.textContent = text("projects.subtitle", "");
+  ui.projectsHomeImage.src = text("projects.homeImageUrl", "./assets/images/MySweetHome.png");
+  ui.projectsHomeImage.alt = text("projects.homeImageAlt", "My Sweet Home");
   ui.loadProjectsLabel.textContent = text("projects.actions.loadProjects", "Load Projects");
   ui.loadAgreementsLabel.textContent = text("projects.actions.loadAgreements", "Load Agreements");
   ui.loadMilestonesLabel.textContent = text("projects.actions.loadMilestones", "Load Milestones");
@@ -250,7 +253,6 @@ function renderDataTable(tabKey, records) {
   const section = getSectionConfig(tabKey);
   const fieldConfig = getFieldConfig(tabKey);
   const sortConfig = getSortConfig(tabKey);
-  const title = section.title || tabKey;
   const subtitle = section.subtitle || "";
 
   ui.projectsSubtitle.textContent = subtitle;
@@ -314,7 +316,6 @@ function renderDataTable(tabKey, records) {
 
   ui.projectsView.innerHTML = `
     <div class="glass-wrap">
-      <div class="glass-caption">${escapeHtml(title)}</div>
       <table class="glass-table">
         <thead><tr><th class="rank-col">#</th>${headCells}</tr></thead>
         <tbody>${rows}</tbody>
