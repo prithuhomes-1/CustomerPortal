@@ -339,7 +339,8 @@
         "saved": "Selection saved.",
         "saveFailed": "Failed to save selection.",
         "noSpaces": "No project spaces available.",
-        "saving": "Saving selection..."
+        "saving": "Saving selection...",
+        "currentProductSet": "Current Product Set"
       },
       "fields": {
         "id": "sgr_projectspaceid",
