@@ -404,11 +404,12 @@ body {
   transform: translateY(-6px) scale(1.01);
   box-shadow: 0 16px 28px rgba(10, 25, 60, 0.16);
   border-color: #4fc4a5;
+  z-index: 20;
 }
 
 .product-card-image-wrap {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
@@ -416,6 +417,9 @@ body {
 .product-card-image {
   height: 180px;
   background: #edf2f8;
+  overflow: hidden;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .product-card-image img {
