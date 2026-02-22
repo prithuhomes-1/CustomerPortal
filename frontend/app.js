@@ -158,9 +158,11 @@ function applyContent() {
   ui.logoutBtn.textContent = text("auth.logout", "Logout");
 
   ui.heroTitle.textContent = text("hero.title", "");
-  ui.heroSubtitle.textContent = text("hero.subtitle", "");
+  renderHeroSubtitle(text("hero.subtitle", ""));
   ui.primaryCta.textContent = text("hero.primaryCta", "Explore");
   ui.secondaryCta.textContent = text("hero.secondaryCta", "Load Projects");
+  ui.primaryCta.dataset.icon = "help";
+  ui.secondaryCta.dataset.icon = "project";
 
   ui.featuresTitle.textContent = text("features.title", "");
   ui.featuresSubtitle.textContent = text("features.subtitle", "");
@@ -206,6 +208,30 @@ function showError(err) {
 function clearError() {
   ui.errorPanel.classList.add("hidden");
   ui.errorView.textContent = "";
+}
+
+function renderHeroSubtitle(rawSubtitle) {
+  const lines = String(rawSubtitle || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) {
+    ui.heroSubtitle.textContent = "";
+    return;
+  }
+
+  if (lines.length === 1) {
+    ui.heroSubtitle.textContent = lines[0];
+    return;
+  }
+
+  const welcome = lines[0];
+  const detail = lines.slice(1).join(" ");
+  ui.heroSubtitle.innerHTML = `
+    <span class="hero-welcome-badge">${escapeHtml(welcome)}</span>
+    <span class="hero-subline">${escapeHtml(detail)}</span>
+  `;
 }
 
 async function refreshProductAccessState() {
