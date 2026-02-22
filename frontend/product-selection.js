@@ -506,8 +506,8 @@ function wireEvents() {
     }
 
     const rect = cardEl.getBoundingClientRect();
-    const previewWidth = 360;
-    const shouldOpenLeft = rect.right + previewWidth > window.innerWidth - 24;
+    const cardMidX = rect.left + (rect.width / 2);
+    const shouldOpenLeft = cardMidX > (window.innerWidth / 2);
     cardEl.classList.toggle("zoom-left", shouldOpenLeft);
     cardEl.classList.toggle("zoom-right", !shouldOpenLeft);
   }, true);
