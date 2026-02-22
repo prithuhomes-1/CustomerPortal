@@ -233,6 +233,8 @@ body {
   font-size: 0.95rem;
   font-weight: 400;
   opacity: 0.92;
+  white-space: pre-line;
+  line-height: 1.5;
   margin-bottom: 2rem;
   max-width: 680px;
   margin-left: auto;
