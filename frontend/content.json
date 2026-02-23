@@ -113,7 +113,7 @@
           "label": "Project Name"
         },
         {
-          "key": "sgr_stage",
+          "key": "sgr_stage@OData.Community.Display.V1.FormattedValue",
           "label": "Stage"
         },
         {
