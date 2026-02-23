@@ -420,6 +420,9 @@ body {
 
 .space-selection-arrow {
   transition: transform 180ms ease;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
 }
 
 .space-selection-arrow.collapsed {
@@ -464,6 +467,13 @@ body {
   border-top-right-radius: 12px;
 }
 
+.space-col-note {
+  margin-top: 0.25rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .space-edit-select {
   width: 100%;
   min-height: 42px;
@@ -501,14 +511,14 @@ body {
 }
 
 .space-current-product-set {
-  margin-top: 0.45rem;
-  font-size: 0.9rem;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
   line-height: 1.3;
-  color: #374151;
+  color: #6b7280;
 }
 
-.space-current-product-set strong {
-  color: #111827;
+.space-productset-cell .space-edit-select {
+  margin-bottom: 0.15rem;
 }
 
 .product-filter-panel {
