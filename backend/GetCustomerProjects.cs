@@ -66,6 +66,13 @@ public class GetCustomerProjects
                 return await CreateJsonErrorResponseAsync(req, HttpStatusCode.Unauthorized, "Token validation failed.");
             }
 
+            var requiredPortalRole = GetEnvironmentVariableOrDefault("External_RequiredRole", "customer_portal_access");
+            if (!string.IsNullOrWhiteSpace(requiredPortalRole) && !HasRequiredRole(claimsPrincipal, requiredPortalRole))
+            {
+                _logger.LogWarning("Access denied. Required role missing. RequiredRole: {RequiredRole}", requiredPortalRole);
+                return await CreateJsonErrorResponseAsync(req, HttpStatusCode.Forbidden, $"User is authenticated but does not have required role '{requiredPortalRole}'.");
+            }
+
             var oid = GetFirstClaimValue(
                 claimsPrincipal,
                 "oid",
@@ -502,6 +509,23 @@ public class GetCustomerProjects
 
         _logger.LogInformation("Retrieved 4th table records. Table: {Table}, ContactId: {ContactId}, ThirdRecordCount: {ThirdRecordCount}, RecordCount: {RecordCount}", fourthTable, contactId, thirdIds.Count, values.GetArrayLength());
         return values.GetRawText();
+    }
+
+    private static bool HasRequiredRole(ClaimsPrincipal principal, string requiredRole)
+    {
+        var required = requiredRole.Trim();
+        if (string.IsNullOrEmpty(required))
+        {
+            return true;
+        }
+
+        // Entra roles may appear either as multiple "roles" claims or space/comma separated in one claim.
+        var roleValues = principal.Claims
+            .Where(c => string.Equals(c.Type, "roles", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(c => c.Value.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return roleValues.Contains(required);
     }
 
     private async Task<string> GetFifthTableAsync(string contactId, string dataverseToken)
