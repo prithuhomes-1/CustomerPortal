@@ -521,8 +521,14 @@ public class GetCustomerProjects
 
         // Entra roles may appear either as multiple "roles" claims or space/comma separated in one claim.
         var roleValues = principal.Claims
-            .Where(c => string.Equals(c.Type, "roles", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(c => c.Value.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries))
+            .Where(c =>
+                string.Equals(c.Type, "roles", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Type, "role", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Type, ClaimTypes.Role, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(c.Type, "http://schemas.microsoft.com/ws/2008/06/identity/claims/role", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(c => c.Value
+                .Trim('[', ']', '"')
+                .Split(new[] { ' ', ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return roleValues.Contains(required);
