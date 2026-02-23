@@ -113,20 +113,16 @@
           "label": "Project Name"
         },
         {
-          "key": "sgr_projectid",
-          "label": "Project ID"
+          "key": "sgr_stage",
+          "label": "Stage"
         },
         {
-          "key": "createdon@OData.Community.Display.V1.FormattedValue",
-          "label": "Created On"
+          "key": "sgr_startdate@OData.Community.Display.V1.FormattedValue",
+          "label": "Start Date"
         },
         {
-          "key": "modifiedon@OData.Community.Display.V1.FormattedValue",
-          "label": "Modified On"
-        },
-        {
-          "key": "statecode@OData.Community.Display.V1.FormattedValue",
-          "label": "State"
+          "key": "_ownerid_value@OData.Community.Display.V1.FormattedValue",
+          "label": "Project Incharge"
         }
       ],
       "agreements": [
