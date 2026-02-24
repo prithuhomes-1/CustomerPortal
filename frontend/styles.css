@@ -1067,6 +1067,10 @@ footer {
     font-size: 2.2rem;
   }
 
+  .hero {
+    padding-top: 5.5rem;
+  }
+
   .projects-section .section-header {
     flex-direction: column;
     align-items: center;
