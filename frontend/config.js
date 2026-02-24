@@ -5,6 +5,10 @@ const isProdStaticWebApp =
   /jolly-glacier-058386a00\.1\.azurestaticapps\.net$/i.test(
     window.location.hostname
   );
+const isDevStaticWebApp =
+  /polite-bush-02b1f0c00\.2\.azurestaticapps\.net$/i.test(
+    window.location.hostname
+  );
 const origin = window.location.origin;
 
 window.portalConfig = {
@@ -26,6 +30,8 @@ window.portalConfig = {
       ? "http://localhost:7071/api/customer/projects"
       : isProdStaticWebApp
       ? "https://prithu-customer-api-prod-gmebh9htgpf7ehb6.centralindia-01.azurewebsites.net/api/customer/projects"
+      : isDevStaticWebApp
+      ? "https://prithu-customer-api-ctfehbhkgpbaanf9.centralindia-01.azurewebsites.net/api/customer/projects"
       : "https://prithu-customer-api-ctfehbhkgpbaanf9.centralindia-01.azurewebsites.net/api/customer/projects",
   },
 };
