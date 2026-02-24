@@ -44,7 +44,8 @@ const ui = {
   projectsView: document.getElementById("projects-view"),
   errorPanel: document.getElementById("error-panel"),
   errorView: document.getElementById("error-view"),
-  footerText: document.getElementById("footer-text")
+  footerText: document.getElementById("footer-text"),
+  footerCredit: document.getElementById("footer-credit")
 };
 
 let content = null;
@@ -177,6 +178,7 @@ function applyContent() {
   ui.loadProjectspacesLabel.textContent = text("projects.actions.loadProjectSpaces", "Load Project Spaces");
   ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.default", "No project data loaded."))}</p>`;
   ui.footerText.textContent = text("footer.text", "");
+  ui.footerCredit.innerHTML = `${escapeHtml(text("footer.creditPrefix", "This site is created and maintained by"))} <a href="${escapeHtml(text("footer.creditLinkUrl", "https://www.digitalaigarage.com"))}" target="_blank" rel="noopener noreferrer">${escapeHtml(text("footer.creditLinkText", "www.digitalaigarage.com"))}</a>`;
 
   const videoUrl = text("hero.videoUrl", "");
   if (videoUrl) {
