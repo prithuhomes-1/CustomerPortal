@@ -357,7 +357,10 @@
     "msalMissing": "MSAL library is unavailable."
   },
   "footer": {
-    "text": "Copyright 2026 Prithu Homes. All rights reserved."
+    "text": "Copyright 2026 Prithu Homes. All rights reserved.",
+    "creditPrefix": "This site is created and maintained by",
+    "creditLinkText": "www.digitalaigarage.com",
+    "creditLinkUrl": "https://www.digitalaigarage.com"
   },
   "dataView": {
     "pageTitle": "Content Data View",

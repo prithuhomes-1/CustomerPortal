@@ -968,6 +968,15 @@ footer {
   text-align: right;
 }
 
+.footer-meta p {
+  margin: 0.2rem 0;
+}
+
+#footer-credit a {
+  color: #58c0ff;
+  text-decoration: underline;
+}
+
 .tables-root {
   display: grid;
   gap: 1rem;
