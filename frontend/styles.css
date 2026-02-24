@@ -1125,3 +1125,24 @@ footer {
     justify-content: flex-start;
   }
 }
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .hero {
+    min-height: 92vh;
+    padding-top: 6.2rem;
+  }
+
+  .hero-content h1 {
+    font-size: 1.95rem;
+    line-height: 1.18;
+  }
+
+  .hero-content p {
+    max-width: 92vw;
+    font-size: 0.9rem;
+  }
+
+  .btn-pill {
+    width: min(300px, 92vw);
+  }
+}
