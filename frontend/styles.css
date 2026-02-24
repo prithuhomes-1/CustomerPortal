@@ -1079,7 +1079,7 @@ footer {
 
   .cta-buttons {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
   }
 
   .data-tabs {
@@ -1100,7 +1100,9 @@ footer {
   }
 
   .btn-pill {
-    width: 100%;
+    flex: 0 0 auto;
+    width: min(320px, 100%);
+    min-height: 52px;
   }
 
   .product-selection-page {
