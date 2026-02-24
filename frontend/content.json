@@ -52,25 +52,25 @@
     "subtitle": "Practical resources to help you navigate each project phase confidently.",
     "cards": [
       {
-        "title": "Project Journey 101",
-        "description": "Understand milestones from booking to possession with real examples.",
-        "badge": "Beginner",
+        "title": "Project Journey",
+        "description": "Understand milestones from booking to possession with Live Updates",
+        "badge": "Any time, Any Where",
         "href": "#",
-        "imageUrl": "./assets/images/construction.jpg"
+        "imageUrl": "./assets/images/Milestone.svg"
       },
       {
-        "title": "Agreement Essentials",
+        "title": "All Agreements at one Place",
         "description": "Review your agreement sections and obligations quickly and clearly.",
-        "badge": "Popular",
+        "badge": "Transparency",
         "href": "#",
-        "imageUrl": "./assets/images/plumbing.jpg"
+        "imageUrl": "./assets/images/Agreement.svg"
       },
       {
         "title": "Payment Tracking",
         "description": "Learn how to track payment milestones and completed transactions.",
-        "badge": "Advanced",
+        "badge": "Clarity",
         "href": "#",
-        "imageUrl": "./assets/images/paint.jpg"
+        "imageUrl": "./assets/images/Payments.svg"
       }
     ]
   },
