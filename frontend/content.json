@@ -123,6 +123,10 @@
         {
           "key": "_ownerid_value@OData.Community.Display.V1.FormattedValue",
           "label": "Project Incharge"
+        },
+        {
+          "key": "sgr_projectinchargemobile",
+          "label": "Incharge Mob. Number"
         }
       ],
       "agreements": [
