@@ -7,9 +7,23 @@ This folder contains a minimal static frontend for the customer portal.
 - `data-view.html`: section-wise tabular view of `content.json`.
 - `content.json`: centralized static content for frontend pages.
 - `config.js`: frontend runtime config placeholders.
+- `components.js`: reusable HTML component helpers and shared navbar/footer shell.
 - `app.js`: MSAL sign-in and backend API call logic.
 - `data-view.js`: renderer for `data-view.html`.
 - `styles.css`: responsive styling.
+
+## Reusable Components
+`components.js` exposes `window.PortalComponents` for shared UI building blocks:
+
+- `navbar()` / `footer()` render the shared portal shell from `<div data-portal-component="navbar"></div>` and `<div data-portal-component="footer"></div>`.
+- `sidebar({ title, links })`
+- `card({ href, imageUrl, badge, title, body })`
+- `table({ columns, rows, className, includeRank })`
+- `modal({ title, body, confirmLabel, cancelLabel })`
+- `loader({ text })`
+- `toast(message, { variant })`
+- `button({ label, variant })`
+- `input({ label, name, type, value })`
 
 ## Configure
 Update `frontend/config.js` values:

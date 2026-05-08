@@ -123,27 +123,16 @@ function renderNav() {
 
 function renderFeatures() {
   const cards = content.features?.cards ?? [];
-  ui.featureGrid.innerHTML = "";
-  cards.forEach((card) => {
-    const anchor = document.createElement("a");
-    anchor.className = "card-link";
-    anchor.href = card.href || "#";
-
-    const image = card.imageUrl
-      ? `<div class="card-image"><img src="${card.imageUrl}" alt="${card.title || ""}" /><span class="card-badge">${card.badge || ""}</span></div>`
-      : `<div class="card-image"><span class="card-badge">${card.badge || ""}</span></div>`;
-
-    anchor.innerHTML = `
-      <article class="card">
-        ${image}
-        <div class="card-body">
-          <h3>${card.title || ""}</h3>
-          <p>${card.description || ""}</p>
-        </div>
-      </article>
-    `;
-    ui.featureGrid.appendChild(anchor);
-  });
+  ui.featureGrid.innerHTML = cards
+    .map((card) => PortalComponents.card({
+      href: card.href || "#",
+      imageUrl: card.imageUrl || "",
+      imageAlt: card.title || "",
+      badge: card.badge || "",
+      title: card.title || "",
+      body: card.description || ""
+    }))
+    .join("");
 }
 
 function applyContent() {
@@ -325,29 +314,9 @@ function renderDataTable(tabKey, records) {
     });
   }
 
-  const headCells = fields
-    .map((field) => `<th>${escapeHtml(field.label || field.key)}</th>`)
-    .join("");
-
-  const rows = rowsData
-    .map((record, index) => {
-      const cells = fields
-        .map((field) => {
-          const raw = record[field.key];
-          const value = raw === null || raw === undefined || raw === "" ? "-" : raw;
-          return `<td>${escapeHtml(value)}</td>`;
-        })
-        .join("");
-      return `<tr><td class="rank-col">${index + 1}</td>${cells}</tr>`;
-    })
-    .join("");
-
   ui.projectsView.innerHTML = `
     <div class="glass-wrap">
-      <table class="glass-table">
-        <thead><tr><th class="rank-col">#</th>${headCells}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      ${PortalComponents.table({ columns: fields, rows: rowsData, className: "glass-table", includeRank: true })}
     </div>
   `;
 }
