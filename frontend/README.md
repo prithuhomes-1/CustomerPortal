@@ -8,6 +8,7 @@ This folder contains a minimal static frontend for the customer portal.
 - `content.json`: centralized static content for frontend pages.
 - `config.js`: frontend runtime config placeholders.
 - `components.js`: reusable HTML component helpers and shared navbar/footer shell.
+- `apiService.js`: shared API endpoint builder and token-aware GET/POST service.
 - `app.js`: MSAL sign-in and backend API call logic.
 - `data-view.js`: renderer for `data-view.html`.
 - `styles.css`: responsive styling.
@@ -24,6 +25,22 @@ This folder contains a minimal static frontend for the customer portal.
 - `toast(message, { variant })`
 - `button({ label, variant })`
 - `input({ label, name, type, value })`
+
+## API Service Layer
+`apiService.js` exposes `window.PortalApiService` so page scripts do not repeat fetch logic.
+
+```javascript
+const apiService = PortalApiService.create({ config, getAccessToken });
+const projects = await apiService.getEntity("projects");
+const spaces = await apiService.getEntity("projectspaces");
+await apiService.postEntity("projectspaceselection", payload);
+```
+
+The service owns:
+- `/api/customer/projects` vs `/api/customer/data?entity=...` URL selection.
+- Authorization header wiring.
+- JSON parsing.
+- Consistent error payloads for debugging.
 
 ## Configure
 Update `frontend/config.js` values:

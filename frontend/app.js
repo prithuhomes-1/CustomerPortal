@@ -51,6 +51,7 @@ const ui = {
 let content = null;
 let msalClient = null;
 let redirectPromise = null;
+let apiService = null;
 let activeDataTab = "projects";
 let hasProductAccess = false;
 const dataCache = {
@@ -235,8 +236,7 @@ async function refreshProductAccessState() {
 
   const accessEntityKey = text("productSelection.actions.productAccessEntityKey", "productaccess");
   try {
-    const token = await getAccessToken();
-    const payload = await fetchEntityPayload(accessEntityKey, token);
+    const payload = await apiService.getEntity(accessEntityKey, { emptyValue: {} });
     hasProductAccess = payload?.hasAccess === true;
   } catch {
     hasProductAccess = false;
@@ -429,34 +429,6 @@ async function getAccessToken() {
   }
 }
 
-function buildEntityEndpoint(entity) {
-  if (config.api?.dataEndpoint) {
-    return `${config.api.dataEndpoint}?entity=${encodeURIComponent(entity)}`;
-  }
-
-  if (config.api?.endpoint && config.api.endpoint.includes("/api/customer/projects")) {
-    return config.api.endpoint.replace("/api/customer/projects", `/api/customer/data?entity=${encodeURIComponent(entity)}`);
-  }
-
-  return config.api.endpoint;
-}
-
-async function fetchEntityPayload(entity, token) {
-  const endpoint = entity === "projects" ? config.api.endpoint : buildEntityEndpoint(entity);
-  const response = await fetch(endpoint, {
-    method: "GET",
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const body = await response.text();
-  const payload = body ? JSON.parse(body) : [];
-
-  if (!response.ok) {
-    throw { status: response.status, payload };
-  }
-
-  return payload;
-}
-
 function renderActiveData() {
   const value =
     activeDataTab === "projects"
@@ -487,18 +459,17 @@ async function loadAllProjectData() {
   ui.projectsView.innerHTML = `<p class="table-empty">${escapeHtml(text("projects.placeholders.loadingAll", "Loading project details, agreements, milestones, transactions, and project spaces..."))}</p>`;
 
   try {
-    const token = await getAccessToken();
     const agreementsEntityKey = text("projects.actions.agreementsEntityKey", "customeragreements");
     const milestonesEntityKey = text("projects.actions.milestonesEntityKey", "paymentmilestones");
     const transactionsEntityKey = text("projects.actions.transactionsEntityKey", "paymenttransactions");
     const projectSpacesEntityKey = text("projects.actions.projectSpacesEntityKey", "projectspaces");
 
     const [projects, agreements, milestones, transactions, projectspaces] = await Promise.all([
-      fetchEntityPayload("projects", token),
-      fetchEntityPayload(agreementsEntityKey, token),
-      fetchEntityPayload(milestonesEntityKey, token),
-      fetchEntityPayload(transactionsEntityKey, token),
-      fetchEntityPayload(projectSpacesEntityKey, token)
+      apiService.getEntity("projects"),
+      apiService.getEntity(agreementsEntityKey),
+      apiService.getEntity(milestonesEntityKey),
+      apiService.getEntity(transactionsEntityKey),
+      apiService.getEntity(projectSpacesEntityKey)
     ]);
 
     dataCache.projects = projects;
@@ -691,6 +662,7 @@ function initializeMsal() {
 
   msalClient = new msal.PublicClientApplication(msalConfig);
   redirectPromise = msalClient.handleRedirectPromise();
+  apiService = PortalApiService.create({ config, getAccessToken });
 }
 
 async function bootstrap() {
